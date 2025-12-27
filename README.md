@@ -25,7 +25,8 @@ This opens an interactive menu:
 [3] Manage Whitelist       - Allow games & apps
 [4] View Status            - Detailed protection status
 [5] View Blocked Attempts  - See what's been blocked
-[6] Exit
+[6] Monitoring             - Detect unauthorized executables
+[7] Exit
 ```
 
 ## Requirements
@@ -50,6 +51,7 @@ Uses the Windows SAFER subsystem (Software Restriction Policies) via registry:
 | `Enable-SRP-Complete.ps1` | Applies all blocking rules |
 | `Rollback-SRP.ps1` | Removes all restrictions |
 | `Add-GameWhitelist.ps1` | Whitelist games & apps |
+| `ExeMonitor.ps1` | Detect unauthorized executables in whitelisted folders |
 
 ## Whitelisting Games & Apps
 

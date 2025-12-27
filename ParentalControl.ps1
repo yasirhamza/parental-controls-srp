@@ -656,6 +656,261 @@ function Show-CurrentWhitelist {
 }
 
 # ═══════════════════════════════════════════════════════════════════
+# MONITORING MENU
+# ═══════════════════════════════════════════════════════════════════
+
+function Show-MonitoringMenu {
+    while ($true) {
+        Write-Header "EXECUTABLE MONITORING"
+
+        if (!(Test-SRPEnabled)) {
+            Write-Host ""
+            Write-Host "  Protection is not enabled." -ForegroundColor Yellow
+            Write-Host "  Enable protection first before using monitoring." -ForegroundColor DarkGray
+            Press-AnyKey
+            return
+        }
+
+        # Check baseline status
+        $baselineFile = "C:\ParentalControl\Data\baseline.csv"
+        $hasBaseline = Test-Path $baselineFile
+        $baselineCount = 0
+        if ($hasBaseline) {
+            $baselineCount = (Import-Csv $baselineFile -ErrorAction SilentlyContinue | Measure-Object).Count
+        }
+
+        Write-Host ""
+        Write-Host "  Baseline: " -NoNewline
+        if ($hasBaseline) {
+            Write-Host "$baselineCount known executables" -ForegroundColor Green
+        } else {
+            Write-Host "NOT SET (run Update Baseline first!)" -ForegroundColor Red
+        }
+
+        Write-Host ""
+        Write-Host "  " + ("-" * 50) -ForegroundColor DarkGray
+        Write-Host ""
+
+        Write-MenuOption -Key "1" -Label "Scan Now" -Description "Check for new/unknown executables"
+        Write-MenuOption -Key "2" -Label "Scan & Quarantine" -Description "Scan and move suspicious files"
+        Write-MenuOption -Key "3" -Label "Update Baseline" -Description "Record current state as trusted"
+        Write-MenuOption -Key "4" -Label "View Baseline" -Description "Show known executables"
+        Write-MenuOption -Key "5" -Label "View Monitor Log" -Description "See recent alerts"
+        Write-MenuOption -Key "6" -Label "Setup Scheduled Scan" -Description "Run automatically"
+        Write-MenuOption -Key "7" -Label "Back to main menu"
+
+        $choice = Read-Choice -Prompt "Enter choice [1-7]"
+
+        $monitorScript = Join-Path $script:ScriptDir "ExeMonitor.ps1"
+
+        switch ($choice) {
+            "1" {
+                if (!(Test-Path $monitorScript)) {
+                    Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+                    Press-AnyKey
+                    continue
+                }
+                if (!$hasBaseline) {
+                    Write-Host ""
+                    Write-Host "  No baseline set! Run 'Update Baseline' first." -ForegroundColor Yellow
+                    Write-Host "  This records your current trusted executables." -ForegroundColor DarkGray
+                    Press-AnyKey
+                    continue
+                }
+                & $monitorScript -Scan
+                Press-AnyKey
+            }
+            "2" {
+                if (!(Test-Path $monitorScript)) {
+                    Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+                    Press-AnyKey
+                    continue
+                }
+                if (!$hasBaseline) {
+                    Write-Host ""
+                    Write-Host "  No baseline set! Run 'Update Baseline' first." -ForegroundColor Yellow
+                    Press-AnyKey
+                    continue
+                }
+                Write-Host ""
+                Write-Host "  This will MOVE any new executables to quarantine." -ForegroundColor Yellow
+                if (Read-YesNo -Prompt "Proceed with scan and quarantine?") {
+                    & $monitorScript -Scan -Quarantine
+                }
+                Press-AnyKey
+            }
+            "3" {
+                if (!(Test-Path $monitorScript)) {
+                    Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+                    Press-AnyKey
+                    continue
+                }
+                Write-Host ""
+                Write-Host "  This will record all current executables in whitelisted" -ForegroundColor Yellow
+                Write-Host "  folders as 'trusted'. Run this after installing games/apps." -ForegroundColor Yellow
+                Write-Host ""
+                if (Read-YesNo -Prompt "Update baseline now?") {
+                    & $monitorScript -UpdateBaseline
+                }
+                Press-AnyKey
+            }
+            "4" {
+                if (!(Test-Path $monitorScript)) {
+                    Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+                    Press-AnyKey
+                    continue
+                }
+                & $monitorScript -ShowBaseline
+                Press-AnyKey
+            }
+            "5" {
+                Show-MonitorLog
+            }
+            "6" {
+                Invoke-SetupScheduledScan
+            }
+            "7" { return }
+            default {
+                Write-Host "  Invalid choice." -ForegroundColor Red
+                Start-Sleep -Milliseconds 500
+            }
+        }
+    }
+}
+
+function Show-MonitorLog {
+    Write-Header "MONITOR LOG"
+
+    $logPath = "C:\ParentalControl\Logs\ExeMonitor.log"
+
+    if (!(Test-Path $logPath)) {
+        Write-Host ""
+        Write-Host "  No monitor log found." -ForegroundColor Yellow
+        Write-Host "  Logs are created when scans detect new executables." -ForegroundColor DarkGray
+        Press-AnyKey
+        return
+    }
+
+    Write-Host ""
+    Write-Host "  Recent monitoring alerts (last 30 entries):" -ForegroundColor White
+    Write-Host "  " + ("-" * 55) -ForegroundColor DarkGray
+    Write-Host ""
+
+    Get-Content $logPath -Tail 30 -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_ -match "\[ALERT\]") {
+            Write-Host "  $_" -ForegroundColor Red
+        } elseif ($_ -match "\[WARN\]") {
+            Write-Host "  $_" -ForegroundColor Yellow
+        } elseif ($_ -match "\[OK\]") {
+            Write-Host "  $_" -ForegroundColor Green
+        } else {
+            Write-Host "  $_" -ForegroundColor White
+        }
+    }
+
+    Write-Host ""
+    Write-Host "  " + ("-" * 55) -ForegroundColor DarkGray
+    Write-Host "  Log file: $logPath" -ForegroundColor DarkGray
+
+    Press-AnyKey
+}
+
+function Invoke-SetupScheduledScan {
+    Write-Header "SETUP SCHEDULED SCAN"
+
+    Write-Host ""
+    Write-Host "  This will create a Windows scheduled task to automatically" -ForegroundColor White
+    Write-Host "  scan whitelisted folders for new executables." -ForegroundColor White
+    Write-Host ""
+
+    # Check if task already exists
+    $taskName = "ParentalControl_ExeMonitor"
+    $existingTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+
+    if ($existingTask) {
+        Write-Host "  Scheduled task already exists:" -ForegroundColor Yellow
+        Write-Host "    Name: $taskName" -ForegroundColor Cyan
+        Write-Host "    State: $($existingTask.State)" -ForegroundColor Cyan
+        Write-Host ""
+
+        if (Read-YesNo -Prompt "Remove existing task and recreate?" -Default $false) {
+            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+            Write-Host "  Removed existing task." -ForegroundColor Green
+        } else {
+            Press-AnyKey
+            return
+        }
+    }
+
+    Write-Host ""
+    Write-Host "  How often should the scan run?" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  [1] Every hour" -ForegroundColor Yellow
+    Write-Host "  [2] Every 4 hours" -ForegroundColor Yellow
+    Write-Host "  [3] Every 12 hours" -ForegroundColor Yellow
+    Write-Host "  [4] Daily" -ForegroundColor Yellow
+    Write-Host "  [5] Cancel" -ForegroundColor Yellow
+
+    $freqChoice = Read-Choice -Prompt "Select frequency [1-5]"
+
+    $interval = switch ($freqChoice) {
+        "1" { New-TimeSpan -Hours 1 }
+        "2" { New-TimeSpan -Hours 4 }
+        "3" { New-TimeSpan -Hours 12 }
+        "4" { New-TimeSpan -Days 1 }
+        "5" { $null }
+        default { $null }
+    }
+
+    if ($null -eq $interval) {
+        Write-Host "  Cancelled." -ForegroundColor Yellow
+        Press-AnyKey
+        return
+    }
+
+    # Create the scheduled task
+    $monitorScript = Join-Path $script:ScriptDir "ExeMonitor.ps1"
+
+    if (!(Test-Path $monitorScript)) {
+        Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+        Press-AnyKey
+        return
+    }
+
+    try {
+        $action = New-ScheduledTaskAction -Execute "powershell.exe" `
+            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$monitorScript`" -Scan -Silent"
+
+        $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $interval
+
+        $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+
+        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+            -StartWhenAvailable -DontStopOnIdleEnd
+
+        Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
+            -Principal $principal -Settings $settings -Description "Scans whitelisted folders for new executables" | Out-Null
+
+        Write-Host ""
+        Write-Host "  Scheduled task created successfully!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "    Task: $taskName" -ForegroundColor Cyan
+        Write-Host "    Runs as: SYSTEM (cannot be disabled by child)" -ForegroundColor Cyan
+        Write-Host "    Frequency: Every $($interval.TotalHours) hour(s)" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Alerts will be logged to:" -ForegroundColor White
+        Write-Host "    C:\ParentalControl\Logs\ExeMonitor.log" -ForegroundColor Cyan
+
+    } catch {
+        Write-Host ""
+        Write-Host "  ERROR: Failed to create scheduled task" -ForegroundColor Red
+        Write-Host "  $_" -ForegroundColor Red
+    }
+
+    Press-AnyKey
+}
+
+# ═══════════════════════════════════════════════════════════════════
 # MAIN MENU
 # ═══════════════════════════════════════════════════════════════════
 
@@ -683,9 +938,10 @@ function Show-MainMenu {
         Write-MenuOption -Key "3" -Label "Manage Whitelist" -Description "Allow games & apps"
         Write-MenuOption -Key "4" -Label "View Status" -Description "Detailed protection status"
         Write-MenuOption -Key "5" -Label "View Blocked Attempts" -Description "See what's been blocked"
-        Write-MenuOption -Key "6" -Label "Exit"
+        Write-MenuOption -Key "6" -Label "Monitoring" -Description "Detect unauthorized executables"
+        Write-MenuOption -Key "7" -Label "Exit"
 
-        $choice = Read-Choice -Prompt "Enter choice [1-6]"
+        $choice = Read-Choice -Prompt "Enter choice [1-7]"
 
         switch ($choice) {
             "1" { Invoke-EnableWizard }
@@ -693,13 +949,14 @@ function Show-MainMenu {
             "3" { Show-GameMenu }
             "4" { Show-Status }
             "5" { Show-BlockedAttempts }
-            "6" {
+            "6" { Show-MonitoringMenu }
+            "7" {
                 Write-Host ""
                 Write-Host "  Goodbye!" -ForegroundColor Cyan
                 return
             }
             default {
-                Write-Host "  Invalid choice. Please enter 1-6." -ForegroundColor Red
+                Write-Host "  Invalid choice. Please enter 1-7." -ForegroundColor Red
                 Start-Sleep -Milliseconds 500
             }
         }

@@ -21,9 +21,8 @@ The solution uses registry-based SAFER configuration combined with PowerShell mo
 | `Enable-SRP-Complete.ps1` | Core script - blocks ALL user-writable execution paths |
 | `Rollback-SRP.ps1` | Completely removes SRP configuration |
 | `Add-GameWhitelist.ps1` | Easy game/app whitelisting with presets (Minecraft, Roblox, Steam, etc.) |
-| `ExeMonitor.ps1` | Scheduled scanning for unauthorized executables (planned) |
+| `ExeMonitor.ps1` | Baseline-based monitoring for unauthorized executables |
 | `RealtimeMonitor.ps1` | FileSystemWatcher-based live monitoring (planned) |
-| `SetupMonitoringTasks.ps1` | Creates protected scheduled tasks (planned) |
 
 ## Technical Context
 
@@ -96,6 +95,26 @@ Some legitimate apps install to AppData:
 Add-AllowRule -Path "%LOCALAPPDATA%\AppName\*" -Note "Description"
 ```
 
+### Monitoring Whitelisted Folders
+
+Since whitelisting a folder allows any executable in it to run, use ExeMonitor.ps1 to detect when new executables appear:
+
+```powershell
+# First, record current trusted executables as baseline
+.\ExeMonitor.ps1 -UpdateBaseline
+
+# Later, scan for new/unknown executables
+.\ExeMonitor.ps1 -Scan
+
+# Scan and quarantine suspicious files
+.\ExeMonitor.ps1 -Scan -Quarantine
+
+# View current baseline
+.\ExeMonitor.ps1 -ShowBaseline
+```
+
+**Scheduled scanning:** Use the interactive menu (option 6 > Setup Scheduled Scan) to create a Windows scheduled task that runs as SYSTEM and cannot be disabled by Standard Users.
+
 ### Testing Checklist
 - [ ] Verify child account is Standard User (not Admin)
 - [ ] Run `gpupdate /force` after changes
@@ -152,6 +171,15 @@ Get-ScheduledTask | Where-Object {$_.TaskName -like "*ParentalControl*"}
 
 # Remove a whitelist
 .\Add-GameWhitelist.ps1 -Preset Minecraft -Remove
+
+# Monitoring commands
+.\ExeMonitor.ps1 -UpdateBaseline        # Record current state as trusted
+.\ExeMonitor.ps1 -Scan                   # Check for new executables
+.\ExeMonitor.ps1 -Scan -Quarantine       # Scan and move suspicious files
+.\ExeMonitor.ps1 -ShowBaseline           # View known executables
+
+# View monitoring logs
+Get-Content "C:\ParentalControl\Logs\ExeMonitor.log" | Select-Object -Last 30
 ```
 
 ## Project Structure
@@ -162,6 +190,7 @@ Repository (development):
 ├── Enable-SRP-Complete.ps1      # Core SRP configuration
 ├── Rollback-SRP.ps1             # Remove all SRP settings
 ├── Add-GameWhitelist.ps1        # Game/app whitelisting helper
+├── ExeMonitor.ps1               # Baseline-based executable monitoring
 └── CLAUDE.md                    # This file
 
 Deployed (C:\ParentalControl\):
@@ -170,14 +199,14 @@ Deployed (C:\ParentalControl\):
 │   ├── Enable-SRP-Complete.ps1
 │   ├── Rollback-SRP.ps1
 │   ├── Add-GameWhitelist.ps1
-│   ├── ExeMonitor.ps1           # (planned)
-│   ├── RealtimeMonitor.ps1      # (planned)
-│   └── SetupMonitoringTasks.ps1 # (planned)
+│   ├── ExeMonitor.ps1           # Detects new executables in whitelisted folders
+│   └── RealtimeMonitor.ps1      # (planned)
 ├── Logs\
-│   └── SAFER.log                # Blocked execution attempts
+│   ├── SAFER.log                # Blocked execution attempts
+│   └── ExeMonitor.log           # Monitoring alerts
 ├── Data\
-│   └── baseline.csv             # (planned)
-└── Quarantine\                  # (planned)
+│   └── baseline.csv             # Known/trusted executables
+└── Quarantine\                  # Quarantined suspicious files
 ```
 
 ## Quick Start
@@ -191,6 +220,7 @@ This opens an interactive menu with options to:
 1. Enable/disable protection with guided wizards
 2. Whitelist games (multi-select presets or custom paths)
 3. View protection status and blocked attempts
+4. Monitor whitelisted folders for unauthorized executables
 
 ## Security Model
 
