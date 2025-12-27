@@ -264,18 +264,6 @@ Add-BlockRule -Path "C:\Users\Public\Pictures\*" -Note "Public Pictures"
 Add-BlockRule -Path "C:\Users\Public\Videos\*" -Note "Public Videos"
 
 # --------------------------------------------------------------
-# OneDrive (OFTEN MISSED!)
-# Synced folders can contain executables
-# --------------------------------------------------------------
-Add-BlockRule -Path "%USERPROFILE%\OneDrive\*" -Note "OneDrive root"
-Add-BlockRule -Path "%USERPROFILE%\OneDrive\*\*" -Note "OneDrive depth 2"
-Add-BlockRule -Path "%USERPROFILE%\OneDrive\*\*\*" -Note "OneDrive depth 3"
-Add-BlockRule -Path "%OneDrive%\*" -Note "OneDrive env var"
-Add-BlockRule -Path "%OneDrive%\*\*" -Note "OneDrive env depth 2"
-Add-BlockRule -Path "%OneDriveConsumer%\*" -Note "OneDrive Consumer"
-Add-BlockRule -Path "%OneDriveCommercial%\*" -Note "OneDrive Commercial"
-
-# --------------------------------------------------------------
 # Removable drives / USB (OFTEN MISSED!)
 # Block common drive letters for removable media
 # --------------------------------------------------------------
@@ -367,7 +355,6 @@ BLOCKED LOCATIONS:
   ✗ Music, Pictures, Videos
   ✗ Temp folders (%TEMP%, %TMP%)
   ✗ C:\Users\Public (all subfolders)
-  ✗ OneDrive folders
   ✗ Removable drives (D: through K:)
   ✗ Browser install locations
 
