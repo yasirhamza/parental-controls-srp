@@ -1,0 +1,25 @@
+# Logs
+*.log
+Logs/
+
+# Backup files
+*.reg
+*.bak
+
+# Temp files
+*.tmp
+*~
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Data files (may contain sensitive paths)
+Data/
+baseline.csv
+
+# Quarantine folder
+Quarantine/
+
+# Claude Code settings
+.claude/
