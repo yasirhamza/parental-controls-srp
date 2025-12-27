@@ -17,7 +17,8 @@ The solution uses registry-based SAFER configuration combined with PowerShell mo
 
 | File | Purpose |
 |------|---------|
-| `Enable-SRP-Complete.ps1` | Main script - blocks ALL user-writable execution paths |
+| `ParentalControl.ps1` | **Main launcher** - interactive menu with wizards |
+| `Enable-SRP-Complete.ps1` | Core script - blocks ALL user-writable execution paths |
 | `Rollback-SRP.ps1` | Completely removes SRP configuration |
 | `Add-GameWhitelist.ps1` | Easy game/app whitelisting with presets (Minecraft, Roblox, Steam, etc.) |
 | `ExeMonitor.ps1` | Scheduled scanning for unauthorized executables (planned) |
@@ -145,13 +146,15 @@ Get-ScheduledTask | Where-Object {$_.TaskName -like "*ParentalControl*"}
 
 ```
 Repository (development):
-├── Enable-SRP-Complete.ps1      # Main SRP configuration
+├── ParentalControl.ps1          # Interactive menu launcher (start here!)
+├── Enable-SRP-Complete.ps1      # Core SRP configuration
 ├── Rollback-SRP.ps1             # Remove all SRP settings
 ├── Add-GameWhitelist.ps1        # Game/app whitelisting helper
 └── CLAUDE.md                    # This file
 
 Deployed (C:\ParentalControl\):
 ├── Scripts\
+│   ├── ParentalControl.ps1      # Run this for interactive menu
 │   ├── Enable-SRP-Complete.ps1
 │   ├── Rollback-SRP.ps1
 │   ├── Add-GameWhitelist.ps1
@@ -164,6 +167,18 @@ Deployed (C:\ParentalControl\):
 │   └── baseline.csv             # (planned)
 └── Quarantine\                  # (planned)
 ```
+
+## Quick Start
+
+```powershell
+# Run as Administrator
+.\ParentalControl.ps1
+```
+
+This opens an interactive menu with options to:
+1. Enable/disable protection with guided wizards
+2. Whitelist games (multi-select presets or custom paths)
+3. View protection status and blocked attempts
 
 ## Security Model
 
