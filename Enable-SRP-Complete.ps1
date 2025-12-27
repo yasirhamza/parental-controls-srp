@@ -24,24 +24,40 @@ Write-Host @"
 ╚══════════════════════════════════════════════════════════════════╝
 "@ -ForegroundColor Cyan
 
+if ($WhatIf) {
+    Write-Host "`n[WHATIF MODE] No changes will be made - showing what would happen`n" -ForegroundColor Yellow
+}
+
 # ═══════════════════════════════════════════════════════════════════
 # WINDOWS 11 22H2+ CRITICAL FIX
 # ═══════════════════════════════════════════════════════════════════
 Write-Host "`n[1/6] Applying Windows 11 22H2+ compatibility fix..." -ForegroundColor Yellow
 $SrpGpPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Srp\Gp"
-if (!(Test-Path $SrpGpPath)) { New-Item -Path $SrpGpPath -Force | Out-Null }
-Set-ItemProperty -Path $SrpGpPath -Name "RuleCount" -Value 0 -Type DWord -Force
-Write-Host "    ✓ Srp\Gp RuleCount set to 0" -ForegroundColor Green
+if ($WhatIf) {
+    Write-Host "    [WOULD] Set $SrpGpPath\RuleCount = 0" -ForegroundColor Cyan
+} else {
+    if (!(Test-Path $SrpGpPath)) { New-Item -Path $SrpGpPath -Force | Out-Null }
+    Set-ItemProperty -Path $SrpGpPath -Name "RuleCount" -Value 0 -Type DWord -Force
+    Write-Host "    ✓ Srp\Gp RuleCount set to 0" -ForegroundColor Green
+}
 
 # ═══════════════════════════════════════════════════════════════════
 # BACKUP EXISTING CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════
 Write-Host "`n[2/6] Creating backup..." -ForegroundColor Yellow
-if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
-    reg export "HKLM\SOFTWARE\Policies\Microsoft\Windows\Safer" $BackupPath /y 2>$null
-    Write-Host "    ✓ Backup saved to: $BackupPath" -ForegroundColor Green
+if ($WhatIf) {
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
+        Write-Host "    [WOULD] Export existing config to: $BackupPath" -ForegroundColor Cyan
+    } else {
+        Write-Host "    [WOULD] No existing config to backup" -ForegroundColor Cyan
+    }
 } else {
-    Write-Host "    ✓ No existing config to backup" -ForegroundColor Green
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
+        reg export "HKLM\SOFTWARE\Policies\Microsoft\Windows\Safer" $BackupPath /y 2>$null
+        Write-Host "    ✓ Backup saved to: $BackupPath" -ForegroundColor Green
+    } else {
+        Write-Host "    ✓ No existing config to backup" -ForegroundColor Green
+    }
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -50,15 +66,7 @@ if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
 Write-Host "`n[3/6] Initializing registry structure..." -ForegroundColor Yellow
 
 $BasePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifiers"
-
-# Clear and recreate
-if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
-    Remove-Item "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer" -Recurse -Force
-}
-
-New-Item -Path $BasePath -Force | Out-Null
-New-Item -Path "$BasePath\0\Paths" -Force | Out-Null       # Disallowed (blocked)
-New-Item -Path "$BasePath\262144\Paths" -Force | Out-Null  # Unrestricted (allowed)
+$LogPath = "C:\ParentalControl\Logs\SAFER.log"
 
 # Core policy settings
 $PolicySettings = @{
@@ -70,22 +78,41 @@ $PolicySettings = @{
     "Levels"              = 0x00071000
 }
 
-foreach ($key in $PolicySettings.Keys) {
-    if ($key -eq "ExecutableTypes") {
-        Set-ItemProperty -Path $BasePath -Name $key -Value $PolicySettings[$key] -Type MultiString
-    } else {
-        Set-ItemProperty -Path $BasePath -Name $key -Value $PolicySettings[$key] -Type DWord
+if ($WhatIf) {
+    Write-Host "    [WOULD] Remove existing SAFER config (if any)" -ForegroundColor Cyan
+    Write-Host "    [WOULD] Create registry structure:" -ForegroundColor Cyan
+    Write-Host "            $BasePath" -ForegroundColor Cyan
+    Write-Host "            $BasePath\0\Paths (block rules)" -ForegroundColor Cyan
+    Write-Host "            $BasePath\262144\Paths (allow rules)" -ForegroundColor Cyan
+    Write-Host "    [WOULD] Set PolicyScope = 1 (non-admins only)" -ForegroundColor Cyan
+    Write-Host "    [WOULD] Create log directory: $(Split-Path $LogPath -Parent)" -ForegroundColor Cyan
+    Write-Host "    [WOULD] Set log file: $LogPath" -ForegroundColor Cyan
+} else {
+    # Clear and recreate
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
+        Remove-Item "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer" -Recurse -Force
     }
+
+    New-Item -Path $BasePath -Force | Out-Null
+    New-Item -Path "$BasePath\0\Paths" -Force | Out-Null       # Disallowed (blocked)
+    New-Item -Path "$BasePath\262144\Paths" -Force | Out-Null  # Unrestricted (allowed)
+
+    foreach ($key in $PolicySettings.Keys) {
+        if ($key -eq "ExecutableTypes") {
+            Set-ItemProperty -Path $BasePath -Name $key -Value $PolicySettings[$key] -Type MultiString
+        } else {
+            Set-ItemProperty -Path $BasePath -Name $key -Value $PolicySettings[$key] -Type DWord
+        }
+    }
+
+    # Enable logging
+    $LogDir = Split-Path $LogPath -Parent
+    if (!(Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
+    Set-ItemProperty -Path $BasePath -Name "LogFileName" -Value $LogPath -Type String
+
+    Write-Host "    ✓ Registry structure initialized" -ForegroundColor Green
+    Write-Host "    ✓ Log file: $LogPath" -ForegroundColor Green
 }
-
-# Enable logging
-$LogPath = "C:\ParentalControl\Logs\SAFER.log"
-$LogDir = Split-Path $LogPath -Parent
-if (!(Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
-Set-ItemProperty -Path $BasePath -Name "LogFileName" -Value $LogPath -Type String
-
-Write-Host "    ✓ Registry structure initialized" -ForegroundColor Green
-Write-Host "    ✓ Log file: $LogPath" -ForegroundColor Green
 
 # ═══════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
@@ -272,7 +299,11 @@ Add-BlockRule -Path "C:\Intel\*" -Note "Intel folder"
 Add-BlockRule -Path "C:\AMD\*" -Note "AMD folder"
 Add-BlockRule -Path "C:\NVIDIA\*" -Note "NVIDIA folder"
 
-Write-Host "    ✓ $script:BlockCount user-writable paths blocked" -ForegroundColor Green
+if ($WhatIf) {
+    Write-Host "    [WOULD] Block $script:BlockCount user-writable paths" -ForegroundColor Cyan
+} else {
+    Write-Host "    ✓ $script:BlockCount user-writable paths blocked" -ForegroundColor Green
+}
 
 # ═══════════════════════════════════════════════════════════════════
 # WHITELIST LEGITIMATE APPLICATIONS
@@ -292,13 +323,21 @@ Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\WindowsApps\*" -Note "Windows Apps
 # Add-AllowRule -Path "%LOCALAPPDATA%\slack\*" -Note "Slack"
 # Add-AllowRule -Path "%LOCALAPPDATA%\Programs\Microsoft VS Code\*" -Note "VS Code"
 
-Write-Host "    ✓ Whitelist exceptions added" -ForegroundColor Green
+if ($WhatIf) {
+    Write-Host "    [WOULD] Add $script:AllowCount whitelist exceptions" -ForegroundColor Cyan
+} else {
+    Write-Host "    ✓ Whitelist exceptions added" -ForegroundColor Green
+}
 
 # ═══════════════════════════════════════════════════════════════════
 # FINALIZE
 # ═══════════════════════════════════════════════════════════════════
 Write-Host "`n" + "═" * 68 -ForegroundColor Cyan
-Write-Host "CONFIGURATION COMPLETE" -ForegroundColor Green
+if ($WhatIf) {
+    Write-Host "SIMULATION COMPLETE (no changes made)" -ForegroundColor Yellow
+} else {
+    Write-Host "CONFIGURATION COMPLETE" -ForegroundColor Green
+}
 Write-Host "═" * 68 -ForegroundColor Cyan
 
 Write-Host @"
@@ -320,6 +359,13 @@ BLOCKED LOCATIONS:
   ✗ Removable drives (D: through K:)
   ✗ Browser install locations
 
+"@ -ForegroundColor White
+
+if ($WhatIf) {
+    Write-Host "To apply these changes for real, run without -WhatIf:" -ForegroundColor Yellow
+    Write-Host "  .\Enable-SRP-Complete.ps1" -ForegroundColor Cyan
+} else {
+    Write-Host @"
 NEXT STEPS:
   1. Run: gpupdate /force
   2. RESTART the computer
@@ -328,8 +374,6 @@ NEXT STEPS:
   5. Add whitelist exceptions as needed
 
 "@ -ForegroundColor White
-
-if (!$WhatIf) {
     Write-Host "Applying group policy update..." -ForegroundColor Yellow
     gpupdate /force
     Write-Host "`n⚠️  RESTART REQUIRED for full enforcement!" -ForegroundColor Red
