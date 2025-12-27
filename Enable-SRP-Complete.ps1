@@ -1,5 +1,4 @@
-#Requires -RunAsAdministrator
-<#
+﻿<#
 .SYNOPSIS
     COMPLETE Software Restriction Policy implementation blocking ALL user-writable paths
 .DESCRIPTION
@@ -16,6 +15,16 @@ param(
     [switch]$WhatIf,
     [string]$BackupPath = "$env:TEMP\SAFER_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').reg"
 )
+
+# Require admin only when making real changes (not for -WhatIf dry runs)
+if (-not $WhatIf) {
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "ERROR: This script requires Administrator privileges." -ForegroundColor Red
+        Write-Host "       Run PowerShell as Administrator, or use -WhatIf for a dry run." -ForegroundColor Yellow
+        exit 1
+    }
+}
 
 Write-Host @"
 ╔══════════════════════════════════════════════════════════════════╗
@@ -53,7 +62,7 @@ if ($WhatIf) {
     }
 } else {
     if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer") {
-        reg export "HKLM\SOFTWARE\Policies\Microsoft\Windows\Safer" $BackupPath /y 2>$null
+        $null = reg export "HKLM\SOFTWARE\Policies\Microsoft\Windows\Safer" $BackupPath /y 2>&1
         Write-Host "    ✓ Backup saved to: $BackupPath" -ForegroundColor Green
     } else {
         Write-Host "    ✓ No existing config to backup" -ForegroundColor Green
