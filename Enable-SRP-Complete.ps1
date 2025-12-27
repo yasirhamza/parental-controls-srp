@@ -190,15 +190,77 @@ Add-BlockRule -Path "%APPDATA%\*\*\*\*" -Note "AppData Roaming depth 4"
 
 # --------------------------------------------------------------
 # AppData\Local (%LOCALAPPDATA%)
-# Where Chrome, VS Code user installs, and many apps go
+# TARGETED blocking - we skip Microsoft folder to allow OneDrive, Teams, etc.
+# Blanket wildcards (%LOCALAPPDATA%\*\*\*) conflict with allow rules
 # --------------------------------------------------------------
-Add-BlockRule -Path "%LOCALAPPDATA%\*" -Note "AppData Local root"
-Add-BlockRule -Path "%LOCALAPPDATA%\*\*" -Note "AppData Local depth 2"
-Add-BlockRule -Path "%LOCALAPPDATA%\*\*\*" -Note "AppData Local depth 3"
-Add-BlockRule -Path "%LOCALAPPDATA%\*\*\*\*" -Note "AppData Local depth 4"
+# User-installed programs (common bypass location)
 Add-BlockRule -Path "%LOCALAPPDATA%\Programs\*" -Note "Local Programs folder"
 Add-BlockRule -Path "%LOCALAPPDATA%\Programs\*\*" -Note "Local Programs depth 2"
 Add-BlockRule -Path "%LOCALAPPDATA%\Programs\*\*\*" -Note "Local Programs depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\Programs\*\*\*\*" -Note "Local Programs depth 4"
+
+# Temp folder in LocalAppData
+Add-BlockRule -Path "%LOCALAPPDATA%\Temp\*" -Note "Local Temp folder"
+Add-BlockRule -Path "%LOCALAPPDATA%\Temp\*\*" -Note "Local Temp depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Temp\*\*\*" -Note "Local Temp depth 3"
+
+# Common app locations that children might exploit (NOT Microsoft folder)
+Add-BlockRule -Path "%LOCALAPPDATA%\Discord\*" -Note "Discord"
+Add-BlockRule -Path "%LOCALAPPDATA%\Discord\*\*" -Note "Discord depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Discord\*\*\*" -Note "Discord depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\Discord\*\*\*\*" -Note "Discord depth 4"
+
+Add-BlockRule -Path "%LOCALAPPDATA%\slack\*" -Note "Slack"
+Add-BlockRule -Path "%LOCALAPPDATA%\slack\*\*" -Note "Slack depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\slack\*\*\*" -Note "Slack depth 3"
+
+Add-BlockRule -Path "%LOCALAPPDATA%\GitHubDesktop\*" -Note "GitHub Desktop"
+Add-BlockRule -Path "%LOCALAPPDATA%\GitHubDesktop\*\*" -Note "GitHub Desktop depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\GitHubDesktop\*\*\*" -Note "GitHub Desktop depth 3"
+
+Add-BlockRule -Path "%LOCALAPPDATA%\Roblox\*" -Note "Roblox"
+Add-BlockRule -Path "%LOCALAPPDATA%\Roblox\*\*" -Note "Roblox depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Roblox\*\*\*" -Note "Roblox depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\Roblox\*\*\*\*" -Note "Roblox depth 4"
+
+# UWP/Store apps cache
+Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*" -Note "UWP Packages"
+Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*\*" -Note "UWP Packages depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*\*\*" -Note "UWP Packages depth 3"
+
+# Browser locations (extensions, downloads)
+Add-BlockRule -Path "%LOCALAPPDATA%\Google\*" -Note "Google folder"
+Add-BlockRule -Path "%LOCALAPPDATA%\Google\*\*" -Note "Google depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Google\*\*\*" -Note "Google depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\Google\*\*\*\*" -Note "Google depth 4"
+Add-BlockRule -Path "%LOCALAPPDATA%\Mozilla\*" -Note "Mozilla folder"
+Add-BlockRule -Path "%LOCALAPPDATA%\Mozilla\*\*" -Note "Mozilla depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\BraveSoftware\*" -Note "Brave browser"
+Add-BlockRule -Path "%LOCALAPPDATA%\BraveSoftware\*\*" -Note "Brave depth 2"
+
+# Other common locations
+Add-BlockRule -Path "%LOCALAPPDATA%\CurseForge\*" -Note "CurseForge"
+Add-BlockRule -Path "%LOCALAPPDATA%\CurseForge\*\*" -Note "CurseForge depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\CurseForge\*\*\*" -Note "CurseForge depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\EpicGamesLauncher\*" -Note "Epic Games"
+Add-BlockRule -Path "%LOCALAPPDATA%\EpicGamesLauncher\*\*" -Note "Epic depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\EpicGamesLauncher\*\*\*" -Note "Epic depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\Steam\*" -Note "Steam local"
+Add-BlockRule -Path "%LOCALAPPDATA%\Steam\*\*" -Note "Steam depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Overwolf\*" -Note "Overwolf"
+Add-BlockRule -Path "%LOCALAPPDATA%\Overwolf\*\*" -Note "Overwolf depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Spotify\*" -Note "Spotify local"
+Add-BlockRule -Path "%LOCALAPPDATA%\Spotify\*\*" -Note "Spotify depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\WhatsApp\*" -Note "WhatsApp"
+Add-BlockRule -Path "%LOCALAPPDATA%\WhatsApp\*\*" -Note "WhatsApp depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\WhatsApp\*\*\*" -Note "WhatsApp depth 3"
+Add-BlockRule -Path "%LOCALAPPDATA%\signal-desktop\*" -Note "Signal"
+Add-BlockRule -Path "%LOCALAPPDATA%\signal-desktop\*\*" -Note "Signal depth 2"
+Add-BlockRule -Path "%LOCALAPPDATA%\Telegram Desktop\*" -Note "Telegram"
+Add-BlockRule -Path "%LOCALAPPDATA%\Telegram Desktop\*\*" -Note "Telegram depth 2"
+
+# NOTE: %LOCALAPPDATA%\Microsoft\ is intentionally NOT blocked
+# This allows OneDrive, Teams, Edge WebView, etc. to function
 
 # --------------------------------------------------------------
 # AppData\LocalLow (OFTEN MISSED!)
@@ -274,22 +336,6 @@ foreach ($letter in 'D','E','F','G','H','I','J','K') {
 }
 
 # --------------------------------------------------------------
-# Windows Store Apps cache (can be exploited)
-# --------------------------------------------------------------
-Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*" -Note "UWP Packages"
-Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*\*" -Note "UWP Packages depth 2"
-Add-BlockRule -Path "%LOCALAPPDATA%\Packages\*\*\*" -Note "UWP Packages depth 3"
-
-# --------------------------------------------------------------
-# Browser caches and download locations
-# --------------------------------------------------------------
-Add-BlockRule -Path "%LOCALAPPDATA%\Google\*" -Note "Google folder"
-Add-BlockRule -Path "%LOCALAPPDATA%\Google\*\*" -Note "Google depth 2"
-Add-BlockRule -Path "%LOCALAPPDATA%\Google\*\*\*" -Note "Google depth 3"
-Add-BlockRule -Path "%LOCALAPPDATA%\Mozilla\*" -Note "Mozilla folder"
-Add-BlockRule -Path "%LOCALAPPDATA%\BraveSoftware\*" -Note "Brave browser"
-
-# --------------------------------------------------------------
 # Intel/AMD/NVIDIA user-writable driver folders
 # --------------------------------------------------------------
 Add-BlockRule -Path "C:\Intel\*" -Note "Intel folder"
@@ -303,31 +349,18 @@ if ($WhatIf) {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# WHITELIST LEGITIMATE APPLICATIONS
+# WHITELIST - USE Add-GameWhitelist.ps1 FOR GAMES/APPS
 # ═══════════════════════════════════════════════════════════════════
-Write-Host "`n[6/6] Adding whitelist exceptions for common apps..." -ForegroundColor Yellow
+Write-Host "`n[6/6] Configuring whitelisting..." -ForegroundColor Yellow
 
-# Microsoft applications that legitimately install to AppData
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*" -Note "OneDrive client"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*" -Note "OneDrive depth 2"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*" -Note "OneDrive depth 3"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*\*" -Note "OneDrive depth 4"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\Teams\*" -Note "MS Teams"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\EdgeWebView\*" -Note "Edge WebView"
-Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\WindowsApps\*" -Note "Windows Apps"
+# NOTE: Microsoft apps (OneDrive, Teams, EdgeWebView) work automatically
+# because we use TARGETED blocking that skips %LOCALAPPDATA%\Microsoft\
 
-# Add more whitelist entries as needed - UNCOMMENT what you need:
-# Add-AllowRule -Path "%LOCALAPPDATA%\Discord\*" -Note "Discord"
-# Add-AllowRule -Path "%APPDATA%\Zoom\*" -Note "Zoom"
-# Add-AllowRule -Path "%APPDATA%\Spotify\*" -Note "Spotify"
-# Add-AllowRule -Path "%LOCALAPPDATA%\slack\*" -Note "Slack"
-# Add-AllowRule -Path "%LOCALAPPDATA%\Programs\Microsoft VS Code\*" -Note "VS Code"
+# Games and apps in blocked locations need explicit whitelisting.
+# Use: .\Add-GameWhitelist.ps1 -Preset <name>
+# Available: Minecraft, Roblox, Steam, Epic, Discord, Spotify, etc.
 
-if ($WhatIf) {
-    Write-Host "    [WOULD] Add $script:AllowCount whitelist exceptions" -ForegroundColor Cyan
-} else {
-    Write-Host "    ✓ Whitelist exceptions added" -ForegroundColor Green
-}
+Write-Host "    ✓ Use Add-GameWhitelist.ps1 to allow specific games/apps" -ForegroundColor Green
 
 # ═══════════════════════════════════════════════════════════════════
 # FINALIZE
@@ -344,19 +377,20 @@ Write-Host @"
 
 SUMMARY:
   • Blocked paths:     $script:BlockCount rules
-  • Allowed paths:     $script:AllowCount rules
   • Log file:          $LogPath
   • Backup file:       $BackupPath
   • Policy applies to: Standard users ONLY (admins unaffected)
 
 BLOCKED LOCATIONS:
-  ✗ AppData\Roaming, Local, LocalLow
-  ✗ Downloads, Desktop, Documents
-  ✗ Music, Pictures, Videos
-  ✗ Temp folders (%TEMP%, %TMP%)
+  ✗ AppData\Roaming (all subfolders)
+  ✗ AppData\Local\Programs, Temp, and app-specific folders
+  ✗ Downloads, Desktop, Documents, Music, Pictures, Videos
+  ✗ Temp folders (%TEMP%, %TMP%, C:\Windows\Temp)
   ✗ C:\Users\Public (all subfolders)
   ✗ Removable drives (D: through K:)
-  ✗ Browser install locations
+
+ALLOWED (Microsoft apps work automatically):
+  ✓ OneDrive, Teams, Edge WebView, Windows Apps
 
 "@ -ForegroundColor White
 
