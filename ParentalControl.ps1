@@ -14,16 +14,27 @@ $script:BasePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifi
 $script:LogPath = "C:\ParentalControl\Logs\SAFER.log"
 
 # ═══════════════════════════════════════════════════════════════════
-# GAME PRESETS (duplicated from Add-GameWhitelist.ps1 for display)
+# PRESETS (synced with Add-GameWhitelist.ps1)
 # ═══════════════════════════════════════════════════════════════════
 $script:GamePresets = [ordered]@{
-    "1" = @{ Name = "Steam"; Desc = "Steam client and games" }
-    "2" = @{ Name = "Epic"; Desc = "Epic Games Launcher and Fortnite" }
-    "3" = @{ Name = "Minecraft"; Desc = "Java + Bedrock editions with mod support" }
-    "4" = @{ Name = "Roblox"; Desc = "Roblox Player and Studio" }
-    "5" = @{ Name = "Discord"; Desc = "Voice chat for gaming" }
-    "6" = @{ Name = "Overwolf"; Desc = "Gaming overlay and mods platform" }
-    "7" = @{ Name = "CurseForge"; Desc = "Mod manager for Minecraft, WoW, etc." }
+    "1" = @{ Name = "Minecraft"; Desc = "Java + Bedrock + mods" }
+    "2" = @{ Name = "Roblox"; Desc = "Player and Studio" }
+    "3" = @{ Name = "Steam"; Desc = "Steam client data" }
+    "4" = @{ Name = "Epic"; Desc = "Epic + Fortnite data" }
+    "5" = @{ Name = "Discord"; Desc = "Voice/text chat" }
+    "6" = @{ Name = "Overwolf"; Desc = "Gaming overlay" }
+    "7" = @{ Name = "CurseForge"; Desc = "Mod manager" }
+}
+
+$script:AppPresets = [ordered]@{
+    "8"  = @{ Name = "Spotify"; Desc = "Music streaming" }
+    "9"  = @{ Name = "Zoom"; Desc = "Video calls" }
+    "10" = @{ Name = "WhatsApp"; Desc = "Messaging" }
+    "11" = @{ Name = "Telegram"; Desc = "Messaging" }
+    "12" = @{ Name = "VSCode"; Desc = "Code editor" }
+    "13" = @{ Name = "GitHubDesktop"; Desc = "Git client" }
+    "14" = @{ Name = "Slack"; Desc = "Team chat" }
+    "15" = @{ Name = "Signal"; Desc = "Secure messaging" }
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -406,7 +417,7 @@ function Invoke-DisableWizard {
 
 function Show-GameMenu {
     while ($true) {
-        Write-Header "MANAGE GAME WHITELIST"
+        Write-Header "MANAGE WHITELIST"
 
         if (!(Test-SRPEnabled)) {
             Write-Host ""
@@ -417,9 +428,9 @@ function Show-GameMenu {
         }
 
         Write-Host ""
-        Write-MenuOption -Key "1" -Label "Add game presets" -Description "Minecraft, Roblox, Steam, etc."
-        Write-MenuOption -Key "2" -Label "Add custom game folder" -Description "Whitelist any path"
-        Write-MenuOption -Key "3" -Label "Remove game presets" -Description "Undo whitelisting"
+        Write-MenuOption -Key "1" -Label "Add presets" -Description "Games & Apps (Minecraft, Spotify, etc.)"
+        Write-MenuOption -Key "2" -Label "Add custom folder" -Description "Whitelist any path"
+        Write-MenuOption -Key "3" -Label "Remove presets" -Description "Undo whitelisting"
         Write-MenuOption -Key "4" -Label "View current whitelist" -Description "See all allowed paths"
         Write-MenuOption -Key "5" -Label "Back to main menu"
 
@@ -443,26 +454,37 @@ function Invoke-GamePresetWizard {
     param ([switch]$Remove)
 
     $action = if ($Remove) { "REMOVE" } else { "ADD" }
-    Write-Header "$action GAME PRESETS"
+    Write-Header "$action PRESETS"
+
+    # Combine presets for lookup
+    $allPresets = @{}
+    foreach ($key in $script:GamePresets.Keys) { $allPresets[$key] = $script:GamePresets[$key] }
+    foreach ($key in $script:AppPresets.Keys) { $allPresets[$key] = $script:AppPresets[$key] }
 
     Write-Host ""
-    Write-Host "  Available game presets:" -ForegroundColor White
-    Write-Host ""
-
+    Write-Host "  GAMES:" -ForegroundColor White
     foreach ($key in $script:GamePresets.Keys) {
         $preset = $script:GamePresets[$key]
-        Write-Host "  [$key] " -NoNewline -ForegroundColor Yellow
+        Write-Host "  [$($key.PadLeft(2))] " -NoNewline -ForegroundColor Yellow
+        Write-Host $preset.Name.PadRight(15) -NoNewline -ForegroundColor Green
+        Write-Host $preset.Desc -ForegroundColor DarkGray
+    }
+
+    Write-Host ""
+    Write-Host "  APPS:" -ForegroundColor White
+    foreach ($key in $script:AppPresets.Keys) {
+        $preset = $script:AppPresets[$key]
+        Write-Host "  [$($key.PadLeft(2))] " -NoNewline -ForegroundColor Yellow
         Write-Host $preset.Name.PadRight(15) -NoNewline -ForegroundColor Cyan
         Write-Host $preset.Desc -ForegroundColor DarkGray
     }
 
     Write-Host ""
-    Write-Host "  [A] All presets" -ForegroundColor Yellow
+    Write-Host "  [G] All Games    [P] All Apps    [A] Everything" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  Enter numbers separated by commas (e.g., 1,3,5)" -ForegroundColor DarkGray
-    Write-Host "  Or enter 'A' for all presets" -ForegroundColor DarkGray
+    Write-Host "  Enter numbers separated by commas (e.g., 1,3,8,10)" -ForegroundColor DarkGray
 
-    $selection = Read-Choice -Prompt "Select games to $($action.ToLower())"
+    $selection = Read-Choice -Prompt "Select items to $($action.ToLower())"
 
     if ([string]::IsNullOrWhiteSpace($selection)) {
         Write-Host "  Cancelled." -ForegroundColor Yellow
@@ -472,13 +494,22 @@ function Invoke-GamePresetWizard {
 
     # Parse selection
     $selectedPresets = @()
-    if ($selection -match '^[Aa]') {
+    $batchPreset = $null
+
+    if ($selection -match '^[Aa]$') {
+        $batchPreset = "All"
+        $selectedPresets = $allPresets.Keys | ForEach-Object { $allPresets[$_].Name }
+    } elseif ($selection -match '^[Gg]$') {
+        $batchPreset = "AllGames"
         $selectedPresets = $script:GamePresets.Keys | ForEach-Object { $script:GamePresets[$_].Name }
+    } elseif ($selection -match '^[Pp]$') {
+        $batchPreset = "AllApps"
+        $selectedPresets = $script:AppPresets.Keys | ForEach-Object { $script:AppPresets[$_].Name }
     } else {
         $numbers = $selection -split '[,\s]+' | Where-Object { $_ -match '^\d+$' }
         foreach ($num in $numbers) {
-            if ($script:GamePresets.ContainsKey($num)) {
-                $selectedPresets += $script:GamePresets[$num].Name
+            if ($allPresets.ContainsKey($num)) {
+                $selectedPresets += $allPresets[$num].Name
             }
         }
     }
@@ -491,10 +522,14 @@ function Invoke-GamePresetWizard {
 
     # Confirm
     Write-Host ""
-    Write-Host "  Selected: $($selectedPresets -join ', ')" -ForegroundColor Cyan
+    if ($selectedPresets.Count -le 5) {
+        Write-Host "  Selected: $($selectedPresets -join ', ')" -ForegroundColor Cyan
+    } else {
+        Write-Host "  Selected: $($selectedPresets.Count) items" -ForegroundColor Cyan
+    }
     Write-Host ""
 
-    if (!(Read-YesNo -Prompt "Proceed with $($action.ToLower())ing these games?")) {
+    if (!(Read-YesNo -Prompt "Proceed with $($action.ToLower())ing these?")) {
         Write-Host "  Cancelled." -ForegroundColor Yellow
         Press-AnyKey
         return
@@ -510,12 +545,22 @@ function Invoke-GamePresetWizard {
         return
     }
 
-    foreach ($preset in $selectedPresets) {
-        Write-Host "  Processing: $preset..." -ForegroundColor Yellow
+    # Use batch preset if available for efficiency
+    if ($batchPreset) {
+        Write-Host "  Applying $batchPreset..." -ForegroundColor Yellow
         if ($Remove) {
-            & $whitelistScript -Preset $preset -Remove
+            & $whitelistScript -Preset $batchPreset -Remove
         } else {
-            & $whitelistScript -Preset $preset
+            & $whitelistScript -Preset $batchPreset
+        }
+    } else {
+        foreach ($preset in $selectedPresets) {
+            Write-Host "  Processing: $preset..." -ForegroundColor Yellow
+            if ($Remove) {
+                & $whitelistScript -Preset $preset -Remove
+            } else {
+                & $whitelistScript -Preset $preset
+            }
         }
     }
 
@@ -635,7 +680,7 @@ function Show-MainMenu {
 
         Write-MenuOption -Key "1" -Label "Enable Protection" -Description "Block unauthorized apps (wizard)"
         Write-MenuOption -Key "2" -Label "Disable Protection" -Description "Remove all restrictions (wizard)"
-        Write-MenuOption -Key "3" -Label "Manage Game Whitelist" -Description "Allow specific games"
+        Write-MenuOption -Key "3" -Label "Manage Whitelist" -Description "Allow games & apps"
         Write-MenuOption -Key "4" -Label "View Status" -Description "Detailed protection status"
         Write-MenuOption -Key "5" -Label "View Blocked Attempts" -Description "See what's been blocked"
         Write-MenuOption -Key "6" -Label "Exit"

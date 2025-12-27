@@ -69,20 +69,27 @@ Some legitimate apps install to AppData:
 
 ### When Adding New Whitelist Entries
 
-**For games (preferred method):**
+**For games and apps (preferred method):**
 ```powershell
-# Use presets for common games
+# Use presets for common games/apps
 .\Add-GameWhitelist.ps1 -Preset Minecraft
-.\Add-GameWhitelist.ps1 -Preset Roblox
+.\Add-GameWhitelist.ps1 -Preset Spotify
 
-# Custom game folder (auto-adds depth wildcards)
+# Batch options
+.\Add-GameWhitelist.ps1 -Preset AllGames   # All game presets
+.\Add-GameWhitelist.ps1 -Preset AllApps    # All app presets
+.\Add-GameWhitelist.ps1 -Preset All        # Everything
+
+# Custom folder (auto-adds depth wildcards)
 .\Add-GameWhitelist.ps1 -CustomPath "D:\Games\MyGame"
 
 # View current whitelist
 .\Add-GameWhitelist.ps1 -List
 ```
 
-**Available presets:** Steam, Epic, Minecraft, Roblox, Discord, Overwolf, CurseForge, All
+**Game presets:** Minecraft, Roblox, Steam, Epic, Discord, Overwolf, CurseForge
+
+**App presets:** Spotify, Zoom, WhatsApp, Telegram, VSCode, GitHubDesktop, Slack, Signal
 
 **For other apps (manual method):**
 ```powershell
@@ -135,10 +142,15 @@ Get-Content "C:\ParentalControl\Logs\SAFER.log" | Select-Object -Last 50
 # Check monitoring tasks
 Get-ScheduledTask | Where-Object {$_.TaskName -like "*ParentalControl*"}
 
-# Whitelist a game
+# Whitelist a game or app
 .\Add-GameWhitelist.ps1 -Preset Minecraft
+.\Add-GameWhitelist.ps1 -Preset Spotify
 
-# Remove a game whitelist
+# Whitelist all games or all apps
+.\Add-GameWhitelist.ps1 -Preset AllGames
+.\Add-GameWhitelist.ps1 -Preset AllApps
+
+# Remove a whitelist
 .\Add-GameWhitelist.ps1 -Preset Minecraft -Remove
 ```
 
