@@ -382,6 +382,9 @@ if ($UpdateBaseline) {
 if ($Scan) {
     $results = Invoke-Scan -QuarantineNew:$Quarantine
 
+    # Convert SAFER.log to UTF-8 after each scan
+    Convert-SaferLogToUtf8 | Out-Null
+
     if (!$Silent) {
         Write-Host ""
         if ($results.Count -eq 0) {
