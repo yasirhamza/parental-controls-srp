@@ -1,0 +1,196 @@
+
+=== WhatIf Output Validation Tests ===
+
+Running -WhatIf mode...
+Captured 6015 characters of output
+Parsed 90 BLOCK rules
+Parsed 8 ALLOW rules
+[PASS] Found block rules
+[PASS] Found allow rules
+
+--- Validating Expected BLOCK Paths ---
+  [OK] %APPDATA%\*
+  [OK] %LOCALAPPDATA%\*
+  [OK] %USERPROFILE%\AppData\LocalLow\*
+  [OK] %USERPROFILE%\Downloads\*
+  [OK] %USERPROFILE%\Desktop\*
+  [OK] %USERPROFILE%\Documents\*
+  [OK] %TEMP%\*
+  [OK] %TMP%\*
+  [OK] C:\Users\Public\*
+  [OK] %OneDrive%\*
+  [OK] D:\*
+  [OK] E:\*
+  [OK] F:\*
+[PASS] All critical user paths are blocked
+
+--- Validating Expected ALLOW Paths ---
+  [OK] C:\Windows\*
+  [OK] C:\Program Files\*
+  [OK] C:\Program Files (x86)\*
+  [OK] C:\ProgramData\Microsoft\Windows Defender\*
+[PASS] All system directories are allowed
+
+--- Validating Microsoft App Whitelist ---
+  [OK] %LOCALAPPDATA%\Microsoft\OneDrive\*
+  [OK] %LOCALAPPDATA%\Microsoft\Teams\*
+  [OK] %LOCALAPPDATA%\Microsoft\EdgeWebView\*
+  [OK] %LOCALAPPDATA%\Microsoft\WindowsApps\*
+[PASS] Microsoft apps are whitelisted
+
+--- Validating System Paths NOT Blocked ---
+  [OK] C:\Windows\* not blocked
+  [OK] C:\Program Files\* not blocked
+  [OK] C:\Program Files (x86)\* not blocked
+[PASS] System paths are NOT blocked
+
+--- Validating Depth Coverage ---
+  [OK] %APPDATA% has all depth levels
+  [OK] %LOCALAPPDATA% has all depth levels
+  [OK] %USERPROFILE%\Downloads has all depth levels
+[PASS] Block rules cover multiple depths
+
+--- Validating Browser Install Paths Blocked ---
+  [OK] %LOCALAPPDATA%\Google\*
+  [OK] %LOCALAPPDATA%\Mozilla\*
+  [OK] %LOCALAPPDATA%\BraveSoftware\*
+[PASS] Browser install paths are blocked
+
+--- Validating Removable Drives Blocked ---
+  [OK] D:\*
+  [OK] E:\*
+  [OK] F:\*
+  [OK] G:\*
+  [OK] H:\*
+  [OK] I:\*
+  [OK] J:\*
+  [OK] K:\*
+[PASS] All removable drives (D-K) are blocked
+
+--- Validating WhatIf Output Structure ---
+[PASS] Shows WHATIF MODE banner
+[PASS] Shows Windows 11 fix step
+[PASS] Shows backup step
+[PASS] Shows registry init step
+[PASS] Shows ALLOW rules step
+[PASS] Shows BLOCK rules step
+[PASS] Shows whitelist step
+[PASS] Shows SIMULATION COMPLETE
+[PASS] Shows PolicyScope = 1
+[PASS] Shows instruction to run without WhatIf
+
+ + ==================================================
+TEST SUMMARY
+==================================================
+
+Passed: 19
+Failed: 0
+
+--- Parsed Rules Summary ---
+Total BLOCK rules: 90
+Total ALLOW rules: 8
+
+[SUCCESS] All WhatIf output validations passed!
+The script would create the expected registry configuration.
+
+--- All Parsed BLOCK Paths ---
+  %APPDATA%\*
+  %APPDATA%\*\*
+  %APPDATA%\*\*\*
+  %APPDATA%\*\*\*\*
+  %LOCALAPPDATA%\*
+  %LOCALAPPDATA%\*\*
+  %LOCALAPPDATA%\*\*\*
+  %LOCALAPPDATA%\*\*\*\*
+  %LOCALAPPDATA%\Programs\*
+  %LOCALAPPDATA%\Programs\*\*
+  %LOCALAPPDATA%\Programs\*\*\*
+  %USERPROFILE%\AppData\LocalLow\*
+  %USERPROFILE%\AppData\LocalLow\*\*
+  %USERPROFILE%\AppData\LocalLow\*\*\*
+  %TEMP%\*
+  %TEMP%\*\*
+  %TEMP%\*\*\*
+  %TMP%\*
+  C:\Windows\Temp\*
+  C:\Windows\Temp\*\*
+  %USERPROFILE%\Downloads\*
+  %USERPROFILE%\Downloads\*\*
+  %USERPROFILE%\Downloads\*\*\*
+  %USERPROFILE%\Desktop\*
+  %USERPROFILE%\Desktop\*\*
+  %USERPROFILE%\Documents\*
+  %USERPROFILE%\Documents\*\*
+  %USERPROFILE%\Documents\*\*\*
+  %USERPROFILE%\Music\*
+  %USERPROFILE%\Music\*\*
+  %USERPROFILE%\Pictures\*
+  %USERPROFILE%\Pictures\*\*
+  %USERPROFILE%\Videos\*
+  %USERPROFILE%\Videos\*\*
+  %USERPROFILE%\Favorites\*
+  %USERPROFILE%\Contacts\*
+  %USERPROFILE%\Links\*
+  %USERPROFILE%\Saved Games\*
+  %USERPROFILE%\Searches\*
+  %USERPROFILE%\3D Objects\*
+  C:\Users\Public\*
+  C:\Users\Public\*\*
+  C:\Users\Public\Desktop\*
+  C:\Users\Public\Documents\*
+  C:\Users\Public\Downloads\*
+  C:\Users\Public\Music\*
+  C:\Users\Public\Pictures\*
+  C:\Users\Public\Videos\*
+  %USERPROFILE%\OneDrive\*
+  %USERPROFILE%\OneDrive\*\*
+  %USERPROFILE%\OneDrive\*\*\*
+  %OneDrive%\*
+  %OneDrive%\*\*
+  %OneDriveConsumer%\*
+  %OneDriveCommercial%\*
+  D:\*
+  D:\*\*
+  D:\*\*\*
+  E:\*
+  E:\*\*
+  E:\*\*\*
+  F:\*
+  F:\*\*
+  F:\*\*\*
+  G:\*
+  G:\*\*
+  G:\*\*\*
+  H:\*
+  H:\*\*
+  H:\*\*\*
+  I:\*
+  I:\*\*
+  I:\*\*\*
+  J:\*
+  J:\*\*
+  J:\*\*\*
+  K:\*
+  K:\*\*
+  K:\*\*\*
+  %LOCALAPPDATA%\Packages\*
+  %LOCALAPPDATA%\Packages\*\*
+  %LOCALAPPDATA%\Packages\*\*\*
+  %LOCALAPPDATA%\Google\*
+  %LOCALAPPDATA%\Google\*\*
+  %LOCALAPPDATA%\Google\*\*\*
+  %LOCALAPPDATA%\Mozilla\*
+  %LOCALAPPDATA%\BraveSoftware\*
+  C:\Intel\*
+  C:\AMD\*
+  C:\NVIDIA\*
+
+--- All Parsed ALLOW Paths ---
+  C:\Windows\*
+  C:\Program Files\*
+  C:\Program Files (x86)\*
+  C:\ProgramData\Microsoft\Windows Defender\*
+  %LOCALAPPDATA%\Microsoft\OneDrive\*
+  %LOCALAPPDATA%\Microsoft\Teams\*
+  %LOCALAPPDATA%\Microsoft\EdgeWebView\*
+  %LOCALAPPDATA%\Microsoft\WindowsApps\*
