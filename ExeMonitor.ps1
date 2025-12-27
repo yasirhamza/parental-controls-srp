@@ -24,6 +24,7 @@ param(
     [switch]$UpdateBaseline,
     [switch]$Quarantine,
     [switch]$ShowBaseline,
+    [switch]$ConvertSaferLog,
     [switch]$Silent
 )
 
@@ -32,6 +33,8 @@ $script:LogDir = "C:\ParentalControl\Logs"
 $script:QuarantineDir = "C:\ParentalControl\Quarantine"
 $script:BaselineFile = "$script:DataDir\baseline.csv"
 $script:AlertLog = "$script:LogDir\ExeMonitor.log"
+$script:SaferLog = "$script:LogDir\SAFER.log"
+$script:SaferLogUtf8 = "$script:LogDir\SAFER-utf8.log"
 $script:BasePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifiers\262144\Paths"
 
 # Executable extensions to monitor
@@ -40,6 +43,38 @@ $script:ExeExtensions = @('.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.pif'
 # ═══════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════
+
+function Convert-SaferLogToUtf8 {
+    <#
+    .SYNOPSIS
+        Converts SAFER.log from UTF-16 LE to UTF-8 for SIEM ingestion
+    #>
+    if (!(Test-Path $script:SaferLog)) {
+        if (!$Silent) {
+            Write-Host "  SAFER.log not found at: $script:SaferLog" -ForegroundColor Yellow
+        }
+        return $false
+    }
+
+    try {
+        # Read as UTF-16 LE (Unicode) and write as UTF-8
+        $content = Get-Content -Path $script:SaferLog -Encoding Unicode -ErrorAction Stop
+        $content | Out-File -FilePath $script:SaferLogUtf8 -Encoding UTF8 -Force
+
+        if (!$Silent) {
+            $lineCount = ($content | Measure-Object -Line).Lines
+            Write-Host "  Converted $lineCount lines to UTF-8" -ForegroundColor Green
+            Write-Host "  Output: $script:SaferLogUtf8" -ForegroundColor Cyan
+        }
+        return $true
+    }
+    catch {
+        if (!$Silent) {
+            Write-Host "  Error converting log: $_" -ForegroundColor Red
+        }
+        return $false
+    }
+}
 
 function Write-Log {
     param (
@@ -318,6 +353,15 @@ if (!$Silent) {
 "@ -ForegroundColor Cyan
 }
 
+# Handle log conversion (doesn't require SRP)
+if ($ConvertSaferLog) {
+    if (!$Silent) {
+        Write-Host "`n  Converting SAFER.log to UTF-8..." -ForegroundColor Yellow
+    }
+    $result = Convert-SaferLogToUtf8
+    exit $(if ($result) { 0 } else { 1 })
+}
+
 # Check if SRP is configured
 $allowPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifiers\262144\Paths"
 if (!(Test-Path $allowPath)) {
@@ -360,6 +404,7 @@ USAGE:
   .\ExeMonitor.ps1 -Scan -Quarantine    Scan and quarantine new files
   .\ExeMonitor.ps1 -UpdateBaseline      Record current state as trusted
   .\ExeMonitor.ps1 -ShowBaseline        Show known executables
+  .\ExeMonitor.ps1 -ConvertSaferLog     Convert SAFER.log to UTF-8
 
 WORKFLOW:
   1. After whitelisting games/apps, run -UpdateBaseline

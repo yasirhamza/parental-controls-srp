@@ -696,10 +696,11 @@ function Show-MonitoringMenu {
         Write-MenuOption -Key "3" -Label "Update Baseline" -Description "Record current state as trusted"
         Write-MenuOption -Key "4" -Label "View Baseline" -Description "Show known executables"
         Write-MenuOption -Key "5" -Label "View Monitor Log" -Description "See recent alerts"
-        Write-MenuOption -Key "6" -Label "Setup Scheduled Scan" -Description "Run automatically"
-        Write-MenuOption -Key "7" -Label "Back to main menu"
+        Write-MenuOption -Key "6" -Label "Convert SAFER Log" -Description "Convert to UTF-8 for SIEM"
+        Write-MenuOption -Key "7" -Label "Setup Scheduled Scan" -Description "Run automatically"
+        Write-MenuOption -Key "8" -Label "Back to main menu"
 
-        $choice = Read-Choice -Prompt "Enter choice [1-7]"
+        $choice = Read-Choice -Prompt "Enter choice [1-8]"
 
         $monitorScript = Join-Path $script:ScriptDir "ExeMonitor.ps1"
 
@@ -767,9 +768,20 @@ function Show-MonitoringMenu {
                 Show-MonitorLog
             }
             "6" {
+                if (!(Test-Path $monitorScript)) {
+                    Write-Host "  ERROR: ExeMonitor.ps1 not found!" -ForegroundColor Red
+                    Press-AnyKey
+                    continue
+                }
+                Write-Host ""
+                Write-Host "  Converting SAFER.log from UTF-16 LE to UTF-8..." -ForegroundColor Yellow
+                & $monitorScript -ConvertSaferLog
+                Press-AnyKey
+            }
+            "7" {
                 Invoke-SetupScheduledScan
             }
-            "7" { return }
+            "8" { return }
             default {
                 Write-Host "  Invalid choice." -ForegroundColor Red
                 Start-Sleep -Milliseconds 500
