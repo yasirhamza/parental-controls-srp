@@ -321,6 +321,9 @@ Write-Host "`n[6/6] Adding whitelist exceptions for common apps..." -ForegroundC
 
 # Microsoft applications that legitimately install to AppData
 Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*" -Note "OneDrive client"
+Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*" -Note "OneDrive depth 2"
+Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*" -Note "OneDrive depth 3"
+Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*\*" -Note "OneDrive depth 4"
 Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\Teams\*" -Note "MS Teams"
 Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\EdgeWebView\*" -Note "Edge WebView"
 Add-AllowRule -Path "%LOCALAPPDATA%\Microsoft\WindowsApps\*" -Note "Windows Apps"

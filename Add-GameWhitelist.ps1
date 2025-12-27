@@ -28,7 +28,7 @@ param(
         # Games
         "Minecraft", "Roblox", "Steam", "Epic", "Discord", "Overwolf", "CurseForge",
         # Apps
-        "Spotify", "Zoom", "WhatsApp", "Telegram", "VSCode", "GitHubDesktop", "Slack", "Signal",
+        "Spotify", "Zoom", "WhatsApp", "Telegram", "VSCode", "GitHubDesktop", "Slack", "Signal", "OneDrive",
         # Batch options
         "AllGames", "AllApps", "All"
     )]
@@ -284,6 +284,18 @@ $AppPresets = @{
             @{Path = "%APPDATA%\Signal\*"; Note = "Signal data"}
         )
         Notes = "Secure messaging"
+    }
+
+    OneDrive = @{
+        Name = "OneDrive"
+        Category = "App"
+        Paths = @(
+            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*"; Note = "OneDrive app"},
+            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*"; Note = "OneDrive depth 2"},
+            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*"; Note = "OneDrive depth 3"},
+            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*\*"; Note = "OneDrive depth 4"}
+        )
+        Notes = "Cloud sync client"
     }
 }
 

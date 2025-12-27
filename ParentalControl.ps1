@@ -35,6 +35,7 @@ $script:AppPresets = [ordered]@{
     "13" = @{ Name = "GitHubDesktop"; Desc = "Git client" }
     "14" = @{ Name = "Slack"; Desc = "Team chat" }
     "15" = @{ Name = "Signal"; Desc = "Secure messaging" }
+    "16" = @{ Name = "OneDrive"; Desc = "Cloud sync" }
 }
 
 # ═══════════════════════════════════════════════════════════════════
