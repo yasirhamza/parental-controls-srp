@@ -303,7 +303,6 @@ function Invoke-EnableWizard {
     Write-Host "    • Music, Pictures, Videos" -ForegroundColor Red
     Write-Host "    • Temp folders" -ForegroundColor Red
     Write-Host "    • C:\Users\Public" -ForegroundColor Red
-    Write-Host "    • OneDrive folders" -ForegroundColor Red
     Write-Host "    • USB drives (D: through K:)" -ForegroundColor Red
     Write-Host ""
     Write-Host "  Administrators (you) are NOT affected." -ForegroundColor Green
