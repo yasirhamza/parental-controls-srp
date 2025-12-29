@@ -48,6 +48,9 @@ function Convert-SaferLogToUtf8 {
     <#
     .SYNOPSIS
         Converts SAFER.log from UTF-16 LE to UTF-8 for SIEM ingestion
+    .DESCRIPTION
+        Only appends NEW lines to the UTF-8 file to preserve file position
+        for log collectors like Wazuh agent that track file offsets.
     #>
     if (!(Test-Path $script:SaferLog)) {
         if (!$Silent) {
@@ -57,14 +60,35 @@ function Convert-SaferLogToUtf8 {
     }
 
     try {
-        # Read as UTF-16 LE (Unicode) and write as UTF-8
-        $content = Get-Content -Path $script:SaferLog -Encoding Unicode -ErrorAction Stop
-        $content | Out-File -FilePath $script:SaferLogUtf8 -Encoding UTF8 -Force
+        # Read source as UTF-16 LE (Unicode)
+        $sourceLines = @(Get-Content -Path $script:SaferLog -Encoding Unicode -ErrorAction Stop)
 
-        if (!$Silent) {
-            $lineCount = ($content | Measure-Object -Line).Lines
-            Write-Host "  Converted $lineCount lines to UTF-8" -ForegroundColor Green
-            Write-Host "  Output: $script:SaferLogUtf8" -ForegroundColor Cyan
+        # Get existing line count in UTF-8 file (if exists)
+        $existingLineCount = 0
+        if (Test-Path $script:SaferLogUtf8) {
+            $existingLines = @(Get-Content -Path $script:SaferLogUtf8 -ErrorAction SilentlyContinue)
+            $existingLineCount = $existingLines.Count
+        }
+
+        # Only process new lines (skip already converted)
+        if ($sourceLines.Count -gt $existingLineCount) {
+            $newLines = $sourceLines | Select-Object -Skip $existingLineCount
+            $newCount = @($newLines).Count
+
+            if ($newCount -gt 0) {
+                # Append new lines only (preserves file position for log collectors)
+                $newLines | Out-File -FilePath $script:SaferLogUtf8 -Encoding UTF8 -Append
+
+                if (!$Silent) {
+                    Write-Host "  Appended $newCount new lines to UTF-8 log" -ForegroundColor Green
+                    Write-Host "  Total lines: $($existingLineCount + $newCount)" -ForegroundColor Cyan
+                    Write-Host "  Output: $script:SaferLogUtf8" -ForegroundColor Cyan
+                }
+            }
+        } else {
+            if (!$Silent) {
+                Write-Host "  No new lines to convert (UTF-8 has $existingLineCount lines)" -ForegroundColor DarkGray
+            }
         }
         return $true
     }
