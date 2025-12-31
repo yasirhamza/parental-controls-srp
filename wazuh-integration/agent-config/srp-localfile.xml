@@ -1,0 +1,19 @@
+<!--
+  Add this to your Wazuh agent.conf (on the manager) or local ossec.conf (on the agent)
+  Location: /var/ossec/etc/shared/default/agent.conf (manager centralized config)
+           or C:\Program Files (x86)\ossec-agent\ossec.conf (local agent config)
+-->
+<agent_config os="Windows">
+  <!-- Windows SRP logs - UTF-8 converted by ExeMonitor.ps1 -->
+  <localfile>
+    <location>C:\ParentalControl\Logs\SAFER-UTF8.log</location>
+    <log_format>syslog</log_format>
+    <frequency>5</frequency>
+  </localfile>
+
+  <!-- Windows Application Event Log for SRP blocked events -->
+  <localfile>
+    <location>Application</location>
+    <log_format>eventchannel</log_format>
+  </localfile>
+</agent_config>
