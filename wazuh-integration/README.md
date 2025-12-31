@@ -10,6 +10,7 @@ This directory contains Wazuh configuration files for monitoring Windows Softwar
 | `rules/windows_srp_rules.xml` | Detection rules for SRP events (IDs 100600-100699) |
 | `lists/srp_baseline` | CDB list of known-good executables for baseline detection |
 | `agent-config/srp-localfile.xml` | Agent configuration snippet for log collection |
+| `dashboards/srp-security-dashboard.ndjson` | OpenSearch dashboard with event timeline and drill-down |
 
 ## Installation
 
@@ -62,6 +63,31 @@ systemctl restart wazuh-manager
 # Or for Docker:
 docker restart wazuh.manager
 ```
+
+### 5. Import Dashboard (Optional)
+
+Import the SRP Security Dashboard into OpenSearch Dashboards:
+
+**Via UI:**
+1. Navigate to Management → Saved Objects
+2. Click Import
+3. Select `dashboards/srp-security-dashboard.ndjson`
+4. Click Import
+
+**Via API:**
+```bash
+curl -sk -u admin:$PASSWORD \
+  -X POST "https://localhost:5601/api/saved_objects/_import?overwrite=true" \
+  -H "osd-xsrf: true" \
+  -F file=@dashboards/srp-security-dashboard.ndjson
+```
+
+The dashboard includes:
+- **SRP Event Timeline** - Events over time by rule ID
+- **Blocked Events** - Windows SRP blocked executions
+- **Allowed Events** - SAFER log allowed executions
+- **All SRP Events** - Combined view
+- **New Executables** - Executables not in baseline
 
 ## Rule IDs
 
