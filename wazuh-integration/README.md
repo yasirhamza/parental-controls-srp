@@ -6,10 +6,11 @@ This directory contains Wazuh configuration files for monitoring Windows Softwar
 
 | File | Purpose |
 |------|---------|
-| `decoders/windows_srp_decoders.xml` | Parses SAFER log format into structured fields |
+| `decoders/windows_srp_decoders.xml` | Parses SAFER log format into structured fields (standard + enriched) |
 | `rules/windows_srp_rules.xml` | Detection rules for SRP events (IDs 100600-100699) |
 | `lists/srp_baseline` | CDB list of known-good executables for baseline detection |
 | `agent-config/srp-localfile.xml` | Agent configuration snippet for log collection |
+| `scripts/sync-baseline.sh` | Manager-side script to sync baseline from Windows agents |
 | `dashboards/srp-security-dashboard.ndjson` | OpenSearch dashboard with event timeline and drill-down |
 
 ## Installation
@@ -113,9 +114,28 @@ The dashboard includes:
 
 ## Windows Prerequisites
 
-1. Run `ExeMonitor.ps1 -ConvertSaferLog` to convert SAFER.log from UTF-16 to UTF-8
+1. Run `ExeMonitor.ps1 -ConvertAndEnrichSaferLog` to convert SAFER.log from UTF-16 to UTF-8 with hash enrichment
 2. Schedule the conversion task to run periodically (e.g., every 5 minutes)
 3. Install and configure the Wazuh agent on the Windows machine
+
+### Log Enrichment
+
+The `-ConvertAndEnrichSaferLog` flag converts and adds timestamp and file hashes to each log entry:
+
+**Standard format:**
+```
+svchost.exe (PID = 1596) identified C:\Windows\test.exe as Unrestricted using default rule, Guid = {...}
+```
+
+**Enriched format:**
+```
+svchost.exe (PID = 1596) identified C:\Windows\test.exe as Unrestricted using default rule, Guid = {...}|2026-01-02T10:30:00Z|SHA256:ABC123...|SHA1:DEF456...
+```
+
+The decoder extracts these additional fields:
+- `srp.timestamp` - When the log was processed
+- `srp.sha256` - SHA-256 hash of the executable (if file exists)
+- `srp.sha1` - SHA-1 hash of the executable (if file exists)
 
 ## Managing the Baseline
 
@@ -128,6 +148,31 @@ The baseline list uses Wazuh CDB format. Windows paths require double quotes due
 
 # Incorrect (will fail to parse)
 C:\Windows\System32\notepad.exe:
+```
+
+### Syncing Baseline from Windows Agent
+
+ExeMonitor.ps1 can export the local baseline to CDB format for syncing with the Wazuh Manager:
+
+**On Windows (generate CDB):**
+```powershell
+.\ExeMonitor.ps1 -ExportCDB
+# Output: C:\ParentalControl\Data\srp_baseline.cdb
+```
+
+**Sync methods:**
+
+1. **Manual copy** - Copy `srp_baseline.cdb` to manager via file share or SCP
+2. **Wazuh logcollector command** - Output CDB content as log events (see agent-config/srp-localfile.xml)
+3. **Scheduled task + API** - Windows task exports CDB, script uploads via Wazuh API
+
+**Manager-side sync script:**
+```bash
+# Copy the script to manager
+cp scripts/sync-baseline.sh /var/ossec/active-response/bin/
+
+# Manual sync from agent files
+./sync-baseline.sh <agent_id>
 ```
 
 ### Adding to Baseline
@@ -154,8 +199,15 @@ grep "100651" /var/ossec/logs/alerts/alerts.json | \
 
 Test the decoder and rules using wazuh-logtest:
 
+**Standard format:**
 ```bash
 echo 'svchost.exe (PID = 1596) identified C:\Windows\test.exe as Unrestricted using default rule, Guid = {11015445-d282-4f86-96a2-9e485f593302}' | \
+  /var/ossec/bin/wazuh-logtest
+```
+
+**Enriched format:**
+```bash
+echo 'svchost.exe (PID = 1596) identified C:\Windows\test.exe as Unrestricted using default rule, Guid = {11015445-d282-4f86-96a2-9e485f593302}|2026-01-02T10:30:00Z|SHA256:E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855|SHA1:DA39A3EE5E6B4B0D3255BFEF95601890AFD80709' | \
   /var/ossec/bin/wazuh-logtest
 ```
 

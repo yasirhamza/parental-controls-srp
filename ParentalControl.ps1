@@ -892,8 +892,13 @@ function Invoke-SetupScheduledScan {
     }
 
     try {
+        # Build command that runs scan, then SIEM operations (log conversion + baseline export)
+        $command = @"
+& '$monitorScript' -Scan -Silent; & '$monitorScript' -ConvertAndEnrichSaferLog -Silent; & '$monitorScript' -ExportCDB -Silent
+"@
+
         $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$monitorScript`" -Scan -Silent"
+            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"$command`""
 
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $interval
 
@@ -903,7 +908,7 @@ function Invoke-SetupScheduledScan {
             -StartWhenAvailable -DontStopOnIdleEnd
 
         Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
-            -Principal $principal -Settings $settings -Description "Scans whitelisted folders for new executables" | Out-Null
+            -Principal $principal -Settings $settings -Description "Scans for new executables and syncs logs for SIEM" | Out-Null
 
         Write-Host ""
         Write-Host "  Scheduled task created successfully!" -ForegroundColor Green
@@ -912,8 +917,15 @@ function Invoke-SetupScheduledScan {
         Write-Host "    Runs as: SYSTEM (cannot be disabled by child)" -ForegroundColor Cyan
         Write-Host "    Frequency: Every $($interval.TotalHours) hour(s)" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "  Alerts will be logged to:" -ForegroundColor White
+        Write-Host "  Operations performed each run:" -ForegroundColor White
+        Write-Host "    1. Scan for new executables" -ForegroundColor Cyan
+        Write-Host "    2. Convert SAFER.log to UTF-8 with hashes (for SIEM)" -ForegroundColor Cyan
+        Write-Host "    3. Export baseline to CDB format (for Wazuh sync)" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Log locations:" -ForegroundColor White
         Write-Host "    C:\ParentalControl\Logs\ExeMonitor.log" -ForegroundColor Cyan
+        Write-Host "    C:\ParentalControl\Logs\SAFER-UTF8.log" -ForegroundColor Cyan
+        Write-Host "    C:\ParentalControl\Data\srp_baseline.cdb" -ForegroundColor Cyan
 
     } catch {
         Write-Host ""

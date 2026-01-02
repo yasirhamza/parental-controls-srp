@@ -8,23 +8,41 @@
 .PARAMETER Scan
     Run a scan now and report findings
 .PARAMETER UpdateBaseline
-    Update the baseline with current executables (run after installing legitimate apps)
+    Update the baseline with current executables (run after installing legitimate apps).
+    By default, performs incremental update (only files modified since last update).
+.PARAMETER Full
+    When used with -UpdateBaseline, forces a full rescan of all whitelisted paths.
+    Use this to rebuild the baseline from scratch.
 .PARAMETER Quarantine
     Move detected executables to quarantine folder
 .PARAMETER ShowBaseline
     Display current baseline
+.PARAMETER ConvertAndEnrichSaferLog
+    Convert SAFER.log from UTF-16 LE to UTF-8 and enrich each entry with
+    timestamp and file hashes (SHA-256, SHA-1) for SIEM ingestion.
+.PARAMETER ExportCDB
+    Export baseline.csv to Wazuh CDB list format (srp_baseline.cdb) for
+    syncing with Wazuh Manager. Outputs to C:\ParentalControl\Data\.
 .EXAMPLE
     .\ExeMonitor.ps1 -Scan
 .EXAMPLE
     .\ExeMonitor.ps1 -UpdateBaseline
+.EXAMPLE
+    .\ExeMonitor.ps1 -UpdateBaseline -Full
+.EXAMPLE
+    .\ExeMonitor.ps1 -ConvertAndEnrichSaferLog
+.EXAMPLE
+    .\ExeMonitor.ps1 -ExportCDB
 #>
 
 param(
     [switch]$Scan,
     [switch]$UpdateBaseline,
+    [switch]$Full,
     [switch]$Quarantine,
     [switch]$ShowBaseline,
-    [switch]$ConvertSaferLog,
+    [switch]$ConvertAndEnrichSaferLog,
+    [switch]$ExportCDB,
     [switch]$Silent
 )
 
@@ -32,6 +50,7 @@ $script:DataDir = "C:\ParentalControl\Data"
 $script:LogDir = "C:\ParentalControl\Logs"
 $script:QuarantineDir = "C:\ParentalControl\Quarantine"
 $script:BaselineFile = "$script:DataDir\baseline.csv"
+$script:BaselineCDB = "$script:DataDir\srp_baseline.cdb"
 $script:AlertLog = "$script:LogDir\ExeMonitor.log"
 $script:SaferLog = "$script:LogDir\SAFER.log"
 $script:SaferLogUtf8 = "$script:LogDir\SAFER-utf8.log"
@@ -44,13 +63,14 @@ $script:ExeExtensions = @('.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.pif'
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════
 
-function Convert-SaferLogToUtf8 {
+function Convert-AndEnrichSaferLog {
     <#
     .SYNOPSIS
-        Converts SAFER.log from UTF-16 LE to UTF-8 for SIEM ingestion
+        Converts SAFER.log from UTF-16 LE to UTF-8 and enriches with hashes
     .DESCRIPTION
         Only appends NEW lines to the UTF-8 file to preserve file position
         for log collectors like Wazuh agent that track file offsets.
+        Adds timestamp and file hashes (SHA-256, SHA-1) to each line.
     #>
     if (!(Test-Path $script:SaferLog)) {
         if (!$Silent) {
@@ -76,11 +96,34 @@ function Convert-SaferLogToUtf8 {
             $newCount = @($newLines).Count
 
             if ($newCount -gt 0) {
-                # Append new lines only (preserves file position for log collectors)
-                $newLines | Out-File -FilePath $script:SaferLogUtf8 -Encoding UTF8 -Append
+                $processedLines = @()
+
+                foreach ($line in $newLines) {
+                    if ($line -match 'identified (.+?) as ') {
+                        $targetPath = $Matches[1]
+                        $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+
+                        # Compute hashes if file exists
+                        $sha256 = ""
+                        $sha1 = ""
+                        if (Test-Path $targetPath -ErrorAction SilentlyContinue) {
+                            $sha256 = (Get-FileHash $targetPath -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
+                            $sha1 = (Get-FileHash $targetPath -Algorithm SHA1 -ErrorAction SilentlyContinue).Hash
+                        }
+
+                        # Append enrichment data: |timestamp|SHA256:hash|SHA1:hash
+                        $enrichedLine = "$line|$timestamp|SHA256:$sha256|SHA1:$sha1"
+                        $processedLines += $enrichedLine
+                    } else {
+                        $processedLines += $line
+                    }
+                }
+
+                # Append processed lines (preserves file position for log collectors)
+                $processedLines | Out-File -FilePath $script:SaferLogUtf8 -Encoding UTF8 -Append
 
                 if (!$Silent) {
-                    Write-Host "  Appended $newCount new lines to UTF-8 log" -ForegroundColor Green
+                    Write-Host "  Appended $newCount new lines (enriched with hashes)" -ForegroundColor Green
                     Write-Host "  Total lines: $($existingLineCount + $newCount)" -ForegroundColor Cyan
                     Write-Host "  Output: $script:SaferLogUtf8" -ForegroundColor Cyan
                 }
@@ -156,7 +199,10 @@ function Get-WhitelistedPaths {
 }
 
 function Get-ExecutablesInPath {
-    param ([string]$Path)
+    param (
+        [string]$Path,
+        [datetime]$ModifiedSince = [datetime]::MinValue
+    )
 
     $executables = @()
 
@@ -165,13 +211,18 @@ function Get-ExecutablesInPath {
     }
 
     Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $script:ExeExtensions -contains $_.Extension.ToLower() } |
+        Where-Object {
+            $script:ExeExtensions -contains $_.Extension.ToLower() -and
+            $_.LastWriteTime -gt $ModifiedSince
+        } |
         ForEach-Object {
-            $hash = (Get-FileHash $_.FullName -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
+            $sha256 = (Get-FileHash $_.FullName -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
+            $sha1 = (Get-FileHash $_.FullName -Algorithm SHA1 -ErrorAction SilentlyContinue).Hash
             $executables += [PSCustomObject]@{
                 Path = $_.FullName
                 Name = $_.Name
-                Hash = $hash
+                SHA256 = $sha256
+                SHA1 = $sha1
                 Size = $_.Length
                 Created = $_.CreationTime
                 Modified = $_.LastWriteTime
@@ -194,7 +245,7 @@ function Initialize-Directories {
 # ═══════════════════════════════════════════════════════════════════
 
 function Update-Baseline {
-    Write-Host "`n  Updating baseline..." -ForegroundColor Yellow
+    param ([switch]$FullMode)
 
     Initialize-Directories
 
@@ -205,22 +256,71 @@ function Update-Baseline {
         return
     }
 
+    # Determine if we can do incremental update (default) or full rescan
+    $modifiedSince = [datetime]::MinValue
+    $existingBaseline = @{}
+    $doIncremental = (-not $FullMode) -and (Test-Path $script:BaselineFile)
+
+    if ($doIncremental) {
+        $baselineInfo = Get-Item $script:BaselineFile
+        $modifiedSince = $baselineInfo.LastWriteTime
+        Write-Host "`n  Incremental update (files modified since $($modifiedSince.ToString('yyyy-MM-dd HH:mm:ss')))..." -ForegroundColor Yellow
+
+        # Load existing baseline into hashtable keyed by path
+        Get-Baseline | ForEach-Object {
+            $existingBaseline[$_.Path] = $_
+        }
+        Write-Host "  Existing baseline: $($existingBaseline.Count) executables" -ForegroundColor DarkGray
+    } else {
+        if ($FullMode) {
+            Write-Host "`n  Full baseline rescan..." -ForegroundColor Yellow
+        } else {
+            Write-Host "`n  No existing baseline - performing full scan..." -ForegroundColor Yellow
+        }
+    }
+
     Write-Host "  Scanning $($whitelistedPaths.Count) whitelisted locations..." -ForegroundColor White
 
-    $allExecutables = @()
+    $newExecutables = @()
+    $updatedCount = 0
+    $addedCount = 0
 
     foreach ($path in $whitelistedPaths) {
         Write-Host "    Scanning: $path" -ForegroundColor DarkGray
-        $exes = Get-ExecutablesInPath -Path $path
-        $allExecutables += $exes
+        $exes = Get-ExecutablesInPath -Path $path -ModifiedSince $modifiedSince
+        $newExecutables += $exes
     }
 
-    if ($allExecutables.Count -gt 0) {
-        $allExecutables | Export-Csv -Path $script:BaselineFile -NoTypeInformation -Force
-        Write-Host "`n  Baseline updated: $($allExecutables.Count) executables recorded" -ForegroundColor Green
-        Write-Log "Baseline updated with $($allExecutables.Count) executables" -Level "OK"
+    if ($doIncremental) {
+        # Merge: update existing entries or add new ones
+        foreach ($exe in $newExecutables) {
+            if ($existingBaseline.ContainsKey($exe.Path)) {
+                $existingBaseline[$exe.Path] = $exe
+                $updatedCount++
+            } else {
+                $existingBaseline[$exe.Path] = $exe
+                $addedCount++
+            }
+        }
+
+        # Write merged baseline
+        $mergedBaseline = $existingBaseline.Values | Sort-Object Path
+        $mergedBaseline | Export-Csv -Path $script:BaselineFile -NoTypeInformation -Force
+
+        Write-Host "`n  Incremental update complete:" -ForegroundColor Green
+        Write-Host "    Updated: $updatedCount" -ForegroundColor Cyan
+        Write-Host "    Added:   $addedCount" -ForegroundColor Cyan
+        Write-Host "    Total:   $($mergedBaseline.Count)" -ForegroundColor Green
+        Write-Log "Incremental baseline update: $updatedCount updated, $addedCount added, $($mergedBaseline.Count) total" -Level "OK"
     } else {
-        Write-Host "`n  No executables found in whitelisted paths" -ForegroundColor Yellow
+        # Full replacement
+        if ($newExecutables.Count -gt 0) {
+            $newExecutables | Export-Csv -Path $script:BaselineFile -NoTypeInformation -Force
+            Write-Host "`n  Baseline updated: $($newExecutables.Count) executables recorded" -ForegroundColor Green
+            Write-Log "Baseline updated with $($newExecutables.Count) executables" -Level "OK"
+        } else {
+            Write-Host "`n  No executables found in whitelisted paths" -ForegroundColor Yellow
+        }
     }
 }
 
@@ -254,6 +354,60 @@ function Show-Baseline {
     }
 }
 
+function Export-BaselineToCDB {
+    <#
+    .SYNOPSIS
+        Exports baseline.csv to Wazuh CDB list format for SIEM baseline sync
+    .DESCRIPTION
+        Converts baseline paths to CDB format: "C:\path\to\file.exe":
+        Also outputs structured log entries for Wazuh agent collection.
+    #>
+    $baseline = Get-Baseline
+
+    if ($baseline.Count -eq 0) {
+        if (!$Silent) {
+            Write-Host "`n  No baseline exists. Run with -UpdateBaseline first." -ForegroundColor Yellow
+        }
+        return $false
+    }
+
+    Initialize-Directories
+
+    try {
+        # Generate CDB format file
+        $cdbContent = @()
+        foreach ($item in $baseline) {
+            # CDB format: "path": (quoted path with trailing colon)
+            $cdbEntry = "`"$($item.Path)`":"
+            $cdbContent += $cdbEntry
+        }
+
+        # Write CDB file (UTF-8 without BOM for Wazuh compatibility)
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllLines($script:BaselineCDB, $cdbContent, $utf8NoBom)
+
+        if (!$Silent) {
+            Write-Host "`n  Exported $($baseline.Count) entries to CDB format" -ForegroundColor Green
+            Write-Host "  Output: $script:BaselineCDB" -ForegroundColor Cyan
+        }
+
+        # Also log a sync event for Wazuh agent to pick up
+        $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+        $syncLog = "$script:LogDir\baseline-sync.log"
+        $syncEntry = "BASELINE_SYNC|$timestamp|entries:$($baseline.Count)|file:$script:BaselineCDB"
+        Add-Content -Path $syncLog -Value $syncEntry -Encoding UTF8
+
+        Write-Log "Exported $($baseline.Count) baseline entries to CDB format" -Level "OK"
+        return $true
+    }
+    catch {
+        if (!$Silent) {
+            Write-Host "  Error exporting CDB: $_" -ForegroundColor Red
+        }
+        return $false
+    }
+}
+
 # ═══════════════════════════════════════════════════════════════════
 # SCANNING
 # ═══════════════════════════════════════════════════════════════════
@@ -268,7 +422,9 @@ function Invoke-Scan {
     $baselinePaths = @{}
 
     foreach ($item in $baseline) {
-        if ($item.Hash) { $baselineHashes[$item.Hash] = $item }
+        # Support both old "Hash" field and new "SHA256" field for backwards compatibility
+        $hash = if ($item.SHA256) { $item.SHA256 } else { $item.Hash }
+        if ($hash) { $baselineHashes[$hash] = $item }
         if ($item.Path) { $baselinePaths[$item.Path] = $item }
     }
 
@@ -294,15 +450,16 @@ function Invoke-Scan {
         foreach ($exe in $exes) {
             $isKnown = $false
 
-            # Check by hash first (most reliable)
-            if ($exe.Hash -and $baselineHashes.ContainsKey($exe.Hash)) {
+            # Check by SHA256 hash first (most reliable)
+            if ($exe.SHA256 -and $baselineHashes.ContainsKey($exe.SHA256)) {
                 $isKnown = $true
             }
             # Fall back to path check
             elseif ($baselinePaths.ContainsKey($exe.Path)) {
                 # Path exists but hash changed - suspicious!
-                $oldHash = $baselinePaths[$exe.Path].Hash
-                if ($oldHash -ne $exe.Hash) {
+                $baselineItem = $baselinePaths[$exe.Path]
+                $oldHash = if ($baselineItem.SHA256) { $baselineItem.SHA256 } else { $baselineItem.Hash }
+                if ($oldHash -ne $exe.SHA256) {
                     $exe | Add-Member -NotePropertyName "Reason" -NotePropertyValue "MODIFIED (hash changed)" -Force
                     $newExecutables += $exe
                     continue
@@ -331,12 +488,14 @@ function Invoke-Scan {
         Write-Log "SCAN ALERT: Found $($newExecutables.Count) new/modified executables" -Level "ALERT"
 
         foreach ($exe in $newExecutables) {
-            Write-Log "  $($exe.Reason): $($exe.Path)" -Level "ALERT"
+            Write-Log "  $($exe.Reason): $($exe.Path) [SHA256:$($exe.SHA256)] [SHA1:$($exe.SHA1)]" -Level "ALERT"
 
             if (!$Silent) {
                 Write-Host "`n  ALERT: $($exe.Reason)" -ForegroundColor Red
                 Write-Host "    File: $($exe.Name)" -ForegroundColor White
                 Write-Host "    Path: $($exe.Path)" -ForegroundColor DarkGray
+                Write-Host "    SHA256: $($exe.SHA256)" -ForegroundColor DarkGray
+                Write-Host "    SHA1: $($exe.SHA1)" -ForegroundColor DarkGray
                 Write-Host "    Size: $([math]::Round($exe.Size / 1KB, 2)) KB" -ForegroundColor DarkGray
                 Write-Host "    Created: $($exe.Created)" -ForegroundColor DarkGray
             }
@@ -378,11 +537,11 @@ if (!$Silent) {
 }
 
 # Handle log conversion (doesn't require SRP)
-if ($ConvertSaferLog) {
+if ($ConvertAndEnrichSaferLog) {
     if (!$Silent) {
-        Write-Host "`n  Converting SAFER.log to UTF-8..." -ForegroundColor Yellow
+        Write-Host "`n  Converting and enriching SAFER.log..." -ForegroundColor Yellow
     }
-    $result = Convert-SaferLogToUtf8
+    $result = Convert-AndEnrichSaferLog
     exit $(if ($result) { 0 } else { 1 })
 }
 
@@ -398,8 +557,16 @@ if ($ShowBaseline) {
     exit 0
 }
 
+if ($ExportCDB) {
+    if (!$Silent) {
+        Write-Host "`n  Exporting baseline to CDB format..." -ForegroundColor Yellow
+    }
+    $result = Export-BaselineToCDB
+    exit $(if ($result) { 0 } else { 1 })
+}
+
 if ($UpdateBaseline) {
-    Update-Baseline
+    Update-Baseline -FullMode:$Full
     exit 0
 }
 
@@ -407,7 +574,7 @@ if ($Scan) {
     $results = Invoke-Scan -QuarantineNew:$Quarantine
 
     # Convert SAFER.log to UTF-8 after each scan
-    Convert-SaferLogToUtf8 | Out-Null
+    Convert-AndEnrichSaferLog | Out-Null
 
     if (!$Silent) {
         Write-Host ""
@@ -427,17 +594,26 @@ if ($Scan) {
 Write-Host @"
 
 USAGE:
-  .\ExeMonitor.ps1 -Scan                Scan for new executables
-  .\ExeMonitor.ps1 -Scan -Quarantine    Scan and quarantine new files
-  .\ExeMonitor.ps1 -UpdateBaseline      Record current state as trusted
-  .\ExeMonitor.ps1 -ShowBaseline        Show known executables
-  .\ExeMonitor.ps1 -ConvertSaferLog     Convert SAFER.log to UTF-8
+  .\ExeMonitor.ps1 -Scan                       Scan for new executables
+  .\ExeMonitor.ps1 -Scan -Quarantine           Scan and quarantine new files
+  .\ExeMonitor.ps1 -UpdateBaseline             Incremental update (default, fast)
+  .\ExeMonitor.ps1 -UpdateBaseline -Full       Full rescan of all whitelisted paths
+  .\ExeMonitor.ps1 -ShowBaseline               Show known executables
+  .\ExeMonitor.ps1 -ConvertAndEnrichSaferLog   Convert to UTF-8 + add hashes/timestamps
+  .\ExeMonitor.ps1 -ExportCDB                  Export baseline to Wazuh CDB format
 
 WORKFLOW:
   1. After whitelisting games/apps, run -UpdateBaseline
   2. Periodically run -Scan to check for new executables
   3. If alerts appear:
-     - Legitimate app? Run -UpdateBaseline
+     - Legitimate app? Run -UpdateBaseline (fast incremental)
      - Suspicious? Run -Scan -Quarantine
+  4. To rebuild baseline from scratch: -UpdateBaseline -Full
+
+SIEM INTEGRATION:
+  -ConvertAndEnrichSaferLog produces enriched logs for Wazuh
+  -ExportCDB exports baseline to C:\ParentalControl\Data\srp_baseline.cdb
+
+  Sync baseline to Wazuh Manager via agent file collection or scheduled task.
 
 "@ -ForegroundColor White
