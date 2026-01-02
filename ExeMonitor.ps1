@@ -257,26 +257,38 @@ function Update-Baseline {
     }
 
     # Determine if we can do incremental update (default) or full rescan
-    $modifiedSince = [datetime]::MinValue
+    $modifiedSince = $null
     $existingBaseline = @{}
-    $doIncremental = (-not $FullMode) -and (Test-Path $script:BaselineFile)
+    $doIncremental = $false
 
-    if ($doIncremental) {
-        $baselineInfo = Get-Item $script:BaselineFile
-        $modifiedSince = $baselineInfo.LastWriteTime
-        Write-Host "`n  Incremental update (files modified since $($modifiedSince.ToString('yyyy-MM-dd HH:mm:ss')))..." -ForegroundColor Yellow
+    if (-not $FullMode) {
+        if (Test-Path $script:BaselineFile) {
+            try {
+                $baselineInfo = Get-Item $script:BaselineFile -ErrorAction Stop
+                $modifiedSince = $baselineInfo.LastWriteTime
 
-        # Load existing baseline into hashtable keyed by path
-        Get-Baseline | ForEach-Object {
-            $existingBaseline[$_.Path] = $_
-        }
-        Write-Host "  Existing baseline: $($existingBaseline.Count) executables" -ForegroundColor DarkGray
-    } else {
-        if ($FullMode) {
-            Write-Host "`n  Full baseline rescan..." -ForegroundColor Yellow
+                # Load existing baseline into hashtable keyed by path
+                Get-Baseline | ForEach-Object {
+                    if ($_.Path) {
+                        $existingBaseline[$_.Path] = $_
+                    }
+                }
+
+                if ($existingBaseline.Count -gt 0) {
+                    $doIncremental = $true
+                    Write-Host "`n  Incremental update (files modified since $($modifiedSince.ToString('yyyy-MM-dd HH:mm:ss')))..." -ForegroundColor Yellow
+                    Write-Host "  Existing baseline: $($existingBaseline.Count) executables" -ForegroundColor DarkGray
+                } else {
+                    Write-Host "`n  Existing baseline is empty - performing full scan..." -ForegroundColor Yellow
+                }
+            } catch {
+                Write-Host "`n  Cannot read baseline file - performing full scan..." -ForegroundColor Yellow
+            }
         } else {
             Write-Host "`n  No existing baseline - performing full scan..." -ForegroundColor Yellow
         }
+    } else {
+        Write-Host "`n  Full baseline rescan..." -ForegroundColor Yellow
     }
 
     Write-Host "  Scanning $($whitelistedPaths.Count) whitelisted locations..." -ForegroundColor White
@@ -287,13 +299,18 @@ function Update-Baseline {
 
     foreach ($path in $whitelistedPaths) {
         Write-Host "    Scanning: $path" -ForegroundColor DarkGray
-        $exes = Get-ExecutablesInPath -Path $path -ModifiedSince $modifiedSince
+        if ($doIncremental -and $modifiedSince) {
+            $exes = Get-ExecutablesInPath -Path $path -ModifiedSince $modifiedSince
+        } else {
+            $exes = Get-ExecutablesInPath -Path $path
+        }
         $newExecutables += $exes
     }
 
     if ($doIncremental) {
         # Merge: update existing entries or add new ones
         foreach ($exe in $newExecutables) {
+            if (-not $exe.Path) { continue }  # Skip entries with null path
             if ($existingBaseline.ContainsKey($exe.Path)) {
                 $existingBaseline[$exe.Path] = $exe
                 $updatedCount++
