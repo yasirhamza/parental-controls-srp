@@ -172,6 +172,10 @@ Add-AllowRule -Path "C:\Program Files\*" -Note "64-bit programs"
 Add-AllowRule -Path "C:\Program Files (x86)\*" -Note "32-bit programs"
 Add-AllowRule -Path "C:\ProgramData\Microsoft\Windows Defender\*" -Note "Windows Defender"
 
+# PowerShell execution policy test scripts (created automatically by PowerShell)
+Add-AllowRule -Path "%TEMP%\__PSScriptPolicyTest_*" -Note "PowerShell policy test"
+Add-AllowRule -Path "%LOCALAPPDATA%\Temp\__PSScriptPolicyTest_*" -Note "PowerShell policy test"
+
 Write-Host "    ✓ $script:AllowCount system directories whitelisted" -ForegroundColor Green
 
 # ═══════════════════════════════════════════════════════════════════

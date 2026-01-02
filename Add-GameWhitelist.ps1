@@ -297,6 +297,16 @@ $AppPresets = @{
         )
         Notes = "Cloud sync client"
     }
+
+    PowerShell = @{
+        Name = "PowerShell Policy Test"
+        Category = "System"
+        Paths = @(
+            @{Path = "%TEMP%\__PSScriptPolicyTest_*"; Note = "PowerShell policy test"},
+            @{Path = "%LOCALAPPDATA%\Temp\__PSScriptPolicyTest_*"; Note = "PowerShell policy test"}
+        )
+        Notes = "Required for PowerShell execution policy checks"
+    }
 }
 
 # Combine all presets for lookup
