@@ -264,7 +264,7 @@ function Update-Baseline {
     if (-not $FullMode) {
         if (Test-Path $script:BaselineFile) {
             try {
-                $baselineInfo = Get-Item $script:BaselineFile -ErrorAction Stop
+                $baselineInfo = Get-Item $script:BaselineFile -Force -ErrorAction Stop
                 $modifiedSince = $baselineInfo.LastWriteTime
 
                 # Load existing baseline into hashtable keyed by path
