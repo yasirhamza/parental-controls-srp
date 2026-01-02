@@ -227,7 +227,7 @@ function Show-BlockedAttempts {
     if (!(Test-Path $script:LogPath)) {
         Write-Host ""
         Write-Host "  No log file found at: $script:LogPath" -ForegroundColor Yellow
-        Write-Host "  Logs are created when SRP blocks an execution attempt." -ForegroundColor DarkGray
+        Write-Host "  Note: SAFER.log records allowed executables. Blocked events are in Windows Event Viewer." -ForegroundColor DarkGray
         Press-AnyKey
         return
     }
@@ -249,6 +249,8 @@ function Show-BlockedAttempts {
     Write-Host ""
     Write-Host "  " + ("-" * 60) -ForegroundColor DarkGray
     Write-Host "  Log file: $script:LogPath" -ForegroundColor DarkGray
+    Write-Host "  Note: This log shows ALLOWED executables. Blocked events are in Windows Event Viewer." -ForegroundColor Cyan
+    Write-Host "  (Event Viewer → Windows Logs → Application → Filter by 'SoftwareRestrictionPolicies')" -ForegroundColor DarkGray
 
     Press-AnyKey
 }

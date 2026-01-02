@@ -3,8 +3,9 @@
   Rule IDs: 100600-100699
 
   Sources:
-  1. Windows Application Event Log (Provider: SoftwareRestrictionPolicies, Event IDs: 865-868)
-  2. SRP Log File (C:\ParentalControl\Logs\*.log) - contains both allowed and blocked events
+  1. Windows Application Event Log (Provider: SoftwareRestrictionPolicies, Event IDs: 865-868) - logs BLOCKED events
+  2. SRP Log File (C:\ParentalControl\Logs\*.log) - logs ALLOWED executables (Unrestricted)
+     Note: Blocked events are logged to Windows Event Viewer by default, not the SAFER.log file
 -->
 
 <group name="windows,srp,policy,">

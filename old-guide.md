@@ -185,13 +185,14 @@ function Add-SRPException {
 
 ### Verifying and troubleshooting SRP
 
-Check the SAFER log file to see blocked execution attempts:
+Check the SAFER log file to see allowed executable launches:
 
 ```powershell
-# View all blocked attempts
-Get-Content "C:\Users\Public\Documents\SAFER.log" | Where-Object { $_ -match "Disallowed" }
+# View allowed executables (SAFER.log logs "Unrestricted" allowed executables)
+Get-Content "C:\Users\Public\Documents\SAFER.log" | Where-Object { $_ -match "Unrestricted" }
 
-# Check Windows Event Log for SRP events (Event IDs 865-868, 882)
+# Check Windows Event Log for blocked SRP events (Event IDs 865-868, 882)
+# Note: Blocked events are logged to Windows Event Viewer by default, not SAFER.log
 Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Microsoft-Windows-SoftwareRestrictionPolicies'} -MaxEvents 20
 ```
 

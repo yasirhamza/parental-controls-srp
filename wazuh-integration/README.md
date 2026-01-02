@@ -96,9 +96,9 @@ The dashboard includes:
 | **File-based (SAFER log)** | | |
 | 100650 | 0 | Base SRP log file event |
 | 100651 | 3 | SRP ALLOWED (Unrestricted) |
-| 100652 | 10 | SRP BLOCKED (Disallowed) |
-| 100653 | 12 | Blocked in user profile |
-| 100654 | 11 | Blocked PowerShell script |
+| 100652 | 10 | SRP BLOCKED (Disallowed) - NOTE: Won't trigger; SAFER.log only logs allowed executables |
+| 100653 | 12 | Blocked in user profile - NOTE: Won't trigger; SAFER.log only logs allowed executables |
+| 100654 | 11 | Blocked PowerShell script - NOTE: Won't trigger; SAFER.log only logs allowed executables |
 | **Baseline Detection** | | |
 | 100660 | 7 | NEW EXECUTABLE not in baseline |
 | 100661 | 10 | New executable in user profile |

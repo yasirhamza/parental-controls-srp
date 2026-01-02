@@ -41,7 +41,7 @@ This opens an interactive menu:
 Uses the Windows SAFER subsystem (Software Restriction Policies) via registry:
 - `PolicyScope = 1` ensures rules apply to **non-admins only**
 - Blocks executables in: AppData, Downloads, Desktop, Documents, Temp, USB drives, etc.
-- Logs blocked attempts to `C:\ParentalControl\Logs\SAFER.log`
+- Logs allowed executables to `C:\ParentalControl\Logs\SAFER.log` (blocked events are logged to Windows Event Viewer by default)
 
 ## Files
 
