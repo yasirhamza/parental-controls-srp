@@ -28,7 +28,7 @@ param(
         # Games
         "Minecraft", "Roblox", "Steam", "Epic", "Discord", "Overwolf", "CurseForge",
         # Apps
-        "Spotify", "Zoom", "WhatsApp", "Telegram", "VSCode", "GitHubDesktop", "Slack", "Signal", "OneDrive",
+        "Spotify", "Zoom", "WhatsApp", "Telegram", "VSCode", "GitHubDesktop", "Slack", "Signal", "OneDrive", "PowerShell",
         # Batch options
         "AllGames", "AllApps", "All"
     )]
