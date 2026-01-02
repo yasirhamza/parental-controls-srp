@@ -107,6 +107,23 @@
     </mitre>
   </rule>
 
+  <!-- ========== BASELINE SYNC RULES ========== -->
+
+  <!-- Baseline sync event -->
+  <rule id="100670" level="3">
+    <decoded_as>srp-baseline-sync</decoded_as>
+    <description>SRP baseline CDB updated: $(srp.entry_count) entries</description>
+    <group>srp_baseline,</group>
+  </rule>
+
+  <!-- Large baseline update (more than 1000 entries) -->
+  <rule id="100671" level="5">
+    <if_sid>100670</if_sid>
+    <field name="srp.entry_count" type="pcre2">\d{4,}</field>
+    <description>SRP baseline CDB major update: $(srp.entry_count) entries</description>
+    <group>srp_baseline,</group>
+  </rule>
+
   <!-- ========== EVENT LOG SRP RULES ========== -->
 
   <!-- Base rule: SRP event from Windows Event Log -->
