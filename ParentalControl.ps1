@@ -892,9 +892,9 @@ function Invoke-SetupScheduledScan {
     }
 
     try {
-        # Build command that runs scan, then SIEM operations (log conversion + baseline export)
+        # Build command that runs scan, then converts logs for SIEM
         $command = @"
-& '$monitorScript' -Scan -Silent; & '$monitorScript' -ConvertAndEnrichSaferLog -Silent; & '$monitorScript' -ExportCDB -Silent
+& '$monitorScript' -Scan -Silent; & '$monitorScript' -ConvertAndEnrichSaferLog -Silent
 "@
 
         $action = New-ScheduledTaskAction -Execute "powershell.exe" `
