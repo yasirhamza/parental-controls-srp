@@ -10,7 +10,7 @@
 -->
 
 <decoder name="windows-srp">
-  <prematch>PID = \d+\p identified </prematch>
+  <prematch>PID = \d+\) identified </prematch>
 </decoder>
 
 <!-- Enriched format with timestamp and hashes - MUST be before standard format -->

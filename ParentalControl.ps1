@@ -893,13 +893,13 @@ function Invoke-SetupScheduledScan {
     }
 
     try {
-        # Build command that runs scan, then converts logs for SIEM
-        $command = @"
-& '$monitorScript' -Scan -Silent; & '$monitorScript' -ConvertAndEnrichSaferLog -Silent
-"@
+        # Build command - just -Scan is enough (it calls ConvertAndEnrichSaferLog internally)
+        # Use -EncodedCommand to avoid quoting/escaping issues with Task Scheduler
+        $command = "& '$monitorScript' -Scan -Silent"
+        $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
 
         $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"$command`""
+            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand $encodedCommand"
 
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $interval
 
