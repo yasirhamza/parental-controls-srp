@@ -14,12 +14,12 @@
 </decoder>
 
 <!-- Enriched format with timestamp and hashes - MUST be before standard format -->
-<!-- Outputs to standard file.hash.* fields for native threat intel integration -->
+<!-- Note: Using srp.sha256/sha1 because data.file is already mapped as keyword in ES -->
 <decoder name="windows-srp-enriched">
   <parent>windows-srp</parent>
   <prematch offset="after_parent">SHA256:</prematch>
   <regex type="pcre2" offset="after_parent">(.+?) as (\S+) using (.+?), Guid = \{[^}]+\}\|([^|]+)\|SHA256:([^|]*)\|SHA1:(\S*)</regex>
-  <order>srp.target_path, srp.decision, srp.rule_type, srp.timestamp, file.hash.sha256, file.hash.sha1</order>
+  <order>srp.target_path, srp.decision, srp.rule_type, srp.timestamp, srp.sha256, srp.sha1</order>
 </decoder>
 
 <!-- Standard format (non-enriched) -->

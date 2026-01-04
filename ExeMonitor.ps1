@@ -103,12 +103,29 @@ function Convert-AndEnrichSaferLog {
                         $targetPath = $Matches[1]
                         $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
 
+                        # Resolve path if it's just a filename (no directory separator)
+                        $resolvedPath = $targetPath
+                        if ($targetPath -notmatch '[\\/]') {
+                            # Try common system locations
+                            $searchPaths = @(
+                                "$env:SystemRoot\System32\$targetPath",
+                                "$env:SystemRoot\SysWOW64\$targetPath",
+                                "$env:SystemRoot\$targetPath"
+                            )
+                            foreach ($searchPath in $searchPaths) {
+                                if (Test-Path $searchPath -ErrorAction SilentlyContinue) {
+                                    $resolvedPath = $searchPath
+                                    break
+                                }
+                            }
+                        }
+
                         # Compute hashes if file exists
                         $sha256 = ""
                         $sha1 = ""
-                        if (Test-Path $targetPath -ErrorAction SilentlyContinue) {
-                            $sha256 = (Get-FileHash $targetPath -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
-                            $sha1 = (Get-FileHash $targetPath -Algorithm SHA1 -ErrorAction SilentlyContinue).Hash
+                        if (Test-Path $resolvedPath -ErrorAction SilentlyContinue) {
+                            $sha256 = (Get-FileHash $resolvedPath -Algorithm SHA256 -ErrorAction SilentlyContinue).Hash
+                            $sha1 = (Get-FileHash $resolvedPath -Algorithm SHA1 -ErrorAction SilentlyContinue).Hash
                         }
 
                         # Append enrichment data: |timestamp|SHA256:hash|SHA1:hash
