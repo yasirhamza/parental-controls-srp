@@ -376,7 +376,8 @@ function Export-BaselineToCDB {
     .SYNOPSIS
         Exports baseline.csv to Wazuh CDB list format for SIEM baseline sync
     .DESCRIPTION
-        Converts baseline paths to CDB format: "C:\path\to\file.exe":
+        Converts baseline to CDB format using SHA256 hashes as keys for reliable matching.
+        Format: sha256_hash:path (hash is the lookup key, path is informational)
         Also outputs structured log entries for Wazuh agent collection.
     #>
     $baseline = Get-Baseline
@@ -391,12 +392,17 @@ function Export-BaselineToCDB {
     Initialize-Directories
 
     try {
-        # Generate CDB format file
+        # Generate CDB format file using SHA256 hash as key
         $cdbContent = @()
+        $skipped = 0
         foreach ($item in $baseline) {
-            # CDB format: "path": (quoted path with trailing colon)
-            $cdbEntry = "`"$($item.Path)`":"
-            $cdbContent += $cdbEntry
+            if ($item.SHA256) {
+                # CDB format: hash:"path" (hash is the lookup key, path is quoted value)
+                $cdbEntry = "$($item.SHA256):`"$($item.Path)`""
+                $cdbContent += $cdbEntry
+            } else {
+                $skipped++
+            }
         }
 
         # Write CDB file (UTF-8 without BOM for Wazuh compatibility)
@@ -404,14 +410,17 @@ function Export-BaselineToCDB {
         [System.IO.File]::WriteAllLines($script:BaselineCDB, $cdbContent, $utf8NoBom)
 
         if (!$Silent) {
-            Write-Host "`n  Exported $($baseline.Count) entries to CDB format" -ForegroundColor Green
+            Write-Host "`n  Exported $($cdbContent.Count) entries to CDB format (hash-based)" -ForegroundColor Green
+            if ($skipped -gt 0) {
+                Write-Host "  Skipped $skipped entries without SHA256 hash" -ForegroundColor Yellow
+            }
             Write-Host "  Output: $script:BaselineCDB" -ForegroundColor Cyan
         }
 
         # Also log a sync event for Wazuh agent to pick up
         $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
         $syncLog = "$script:LogDir\baseline-sync.log"
-        $syncEntry = "BASELINE_SYNC|$timestamp|entries:$($baseline.Count)|file:$script:BaselineCDB"
+        $syncEntry = "BASELINE_SYNC|$timestamp|entries:$($cdbContent.Count)|file:$script:BaselineCDB"
         Add-Content -Path $syncLog -Value $syncEntry -Encoding UTF8
 
         Write-Log "Exported $($baseline.Count) baseline entries to CDB format" -Level "OK"

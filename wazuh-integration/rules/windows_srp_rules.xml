@@ -63,11 +63,11 @@
   <!-- ========== BASELINE DETECTION RULES ========== -->
 
   <!-- New executable not in baseline (level 7 = alert worthy) -->
-  <!-- Note: Baseline list uses lowercase paths for matching -->
+  <!-- Note: Baseline CDB uses SHA256 hashes as keys for reliable matching -->
   <rule id="100660" level="7">
     <if_sid>100651</if_sid>
-    <list field="srp.target_path" lookup="not_match_key">etc/lists/srp/srp_baseline</list>
-    <description>NEW EXECUTABLE: $(srp.target_path) not in baseline</description>
+    <list field="file.hash.sha256" lookup="not_match_key">etc/lists/srp/srp_baseline</list>
+    <description>NEW EXECUTABLE: $(srp.target_path) (hash not in baseline)</description>
     <group>srp_new_executable,</group>
     <mitre>
       <id>T1204</id>
