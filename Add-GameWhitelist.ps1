@@ -102,7 +102,7 @@ $GamePresets = @{
             @{Path = "%APPDATA%\.minecraft\*\*"; Note = "Minecraft depth 2"},
             @{Path = "%APPDATA%\.minecraft\*\*\*"; Note = "Minecraft depth 3"},
             @{Path = "%APPDATA%\.minecraft\*\*\*\*"; Note = "Minecraft depth 4 (mods)"},
-            @{Path = "%LOCALAPPDATA%\Packages\Microsoft.Minecraft*"; Note = "Minecraft Bedrock"}
+            @{Path = "%USERPROFILE%\AppData\Local\Packages\Microsoft.Minecraft*"; Note = "Minecraft Bedrock"}
         )
         Notes = "Java + Bedrock + mods (Forge, Fabric)"
     }
@@ -111,10 +111,10 @@ $GamePresets = @{
         Name = "Roblox"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Roblox\*"; Note = "Roblox Player"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*"; Note = "Roblox depth 2"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*\*"; Note = "Roblox depth 3"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*\*\*"; Note = "Roblox depth 4"}
+            @{Path = "%USERPROFILE%\AppData\Local\Roblox\*"; Note = "Roblox Player"},
+            @{Path = "%USERPROFILE%\AppData\Local\Roblox\*\*"; Note = "Roblox depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Roblox\*\*\*"; Note = "Roblox depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Roblox\*\*\*\*"; Note = "Roblox depth 4"}
         )
         Notes = "Roblox Player and Studio"
     }
@@ -123,9 +123,9 @@ $GamePresets = @{
         Name = "Steam"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Steam\*"; Note = "Steam local data"},
-            @{Path = "%LOCALAPPDATA%\Steam\*\*"; Note = "Steam depth 2"},
-            @{Path = "%LOCALAPPDATA%\Steam\*\*\*"; Note = "Steam depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Steam\*"; Note = "Steam local data"},
+            @{Path = "%USERPROFILE%\AppData\Local\Steam\*\*"; Note = "Steam depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Steam\*\*\*"; Note = "Steam depth 3"},
             @{Path = "%APPDATA%\Steam\*"; Note = "Steam roaming"},
             @{Path = "%USERPROFILE%\AppData\LocalLow\Steam\*"; Note = "Steam LocalLow"}
         )
@@ -136,11 +136,11 @@ $GamePresets = @{
         Name = "Epic Games"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*"; Note = "Epic launcher"},
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*\*"; Note = "Epic depth 2"},
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*\*\*"; Note = "Epic depth 3"},
-            @{Path = "%LOCALAPPDATA%\FortniteGame\*"; Note = "Fortnite data"},
-            @{Path = "%LOCALAPPDATA%\UnrealEngine\*"; Note = "Unreal Engine"}
+            @{Path = "%USERPROFILE%\AppData\Local\EpicGamesLauncher\*"; Note = "Epic launcher"},
+            @{Path = "%USERPROFILE%\AppData\Local\EpicGamesLauncher\*\*"; Note = "Epic depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\EpicGamesLauncher\*\*\*"; Note = "Epic depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\FortniteGame\*"; Note = "Fortnite data"},
+            @{Path = "%USERPROFILE%\AppData\Local\UnrealEngine\*"; Note = "Unreal Engine"}
         )
         Notes = "Epic launcher + Fortnite data"
     }
@@ -149,10 +149,10 @@ $GamePresets = @{
         Name = "Discord"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Discord\*"; Note = "Discord app"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*"; Note = "Discord depth 2"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*\*"; Note = "Discord depth 3"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*\*\*"; Note = "Discord depth 4"},
+            @{Path = "%USERPROFILE%\AppData\Local\Discord\*"; Note = "Discord app"},
+            @{Path = "%USERPROFILE%\AppData\Local\Discord\*\*"; Note = "Discord depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Discord\*\*\*"; Note = "Discord depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Discord\*\*\*\*"; Note = "Discord depth 4"},
             @{Path = "%APPDATA%\discord\*"; Note = "Discord roaming"}
         )
         Notes = "Voice/text chat for gaming"
@@ -162,9 +162,9 @@ $GamePresets = @{
         Name = "Overwolf"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Overwolf\*"; Note = "Overwolf"},
-            @{Path = "%LOCALAPPDATA%\Overwolf\*\*"; Note = "Overwolf depth 2"},
-            @{Path = "%LOCALAPPDATA%\Overwolf\*\*\*"; Note = "Overwolf depth 3"}
+            @{Path = "%USERPROFILE%\AppData\Local\Overwolf\*"; Note = "Overwolf"},
+            @{Path = "%USERPROFILE%\AppData\Local\Overwolf\*\*"; Note = "Overwolf depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Overwolf\*\*\*"; Note = "Overwolf depth 3"}
         )
         Notes = "Gaming overlay and mods"
     }
@@ -197,8 +197,8 @@ $AppPresets = @{
             @{Path = "%APPDATA%\Spotify\*"; Note = "Spotify app"},
             @{Path = "%APPDATA%\Spotify\*\*"; Note = "Spotify depth 2"},
             @{Path = "%APPDATA%\Spotify\*\*\*"; Note = "Spotify depth 3"},
-            @{Path = "%LOCALAPPDATA%\Spotify\*"; Note = "Spotify local"},
-            @{Path = "%LOCALAPPDATA%\Spotify\*\*"; Note = "Spotify local depth 2"}
+            @{Path = "%USERPROFILE%\AppData\Local\Spotify\*"; Note = "Spotify local"},
+            @{Path = "%USERPROFILE%\AppData\Local\Spotify\*\*"; Note = "Spotify local depth 2"}
         )
         Notes = "Music streaming"
     }
@@ -219,9 +219,9 @@ $AppPresets = @{
         Name = "WhatsApp"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*"; Note = "WhatsApp app"},
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*\*"; Note = "WhatsApp depth 2"},
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*\*\*"; Note = "WhatsApp depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\WhatsApp\*"; Note = "WhatsApp app"},
+            @{Path = "%USERPROFILE%\AppData\Local\WhatsApp\*\*"; Note = "WhatsApp depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\WhatsApp\*\*\*"; Note = "WhatsApp depth 3"},
             @{Path = "%APPDATA%\WhatsApp\*"; Note = "WhatsApp roaming"}
         )
         Notes = "Messaging app"
@@ -242,9 +242,9 @@ $AppPresets = @{
         Name = "VS Code"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Programs\Microsoft VS Code\*"; Note = "VS Code app"},
-            @{Path = "%LOCALAPPDATA%\Programs\Microsoft VS Code\*\*"; Note = "VS Code depth 2"},
-            @{Path = "%LOCALAPPDATA%\Programs\Microsoft VS Code\*\*\*"; Note = "VS Code depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\*"; Note = "VS Code app"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\*\*"; Note = "VS Code depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\*\*\*"; Note = "VS Code depth 3"},
             @{Path = "%APPDATA%\Code\*"; Note = "VS Code settings"},
             @{Path = "%APPDATA%\Code\*\*"; Note = "VS Code settings depth 2"}
         )
@@ -255,9 +255,9 @@ $AppPresets = @{
         Name = "GitHub Desktop"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*"; Note = "GitHub Desktop"},
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*\*"; Note = "GitHub Desktop depth 2"},
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*\*\*"; Note = "GitHub Desktop depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\GitHubDesktop\*"; Note = "GitHub Desktop"},
+            @{Path = "%USERPROFILE%\AppData\Local\GitHubDesktop\*\*"; Note = "GitHub Desktop depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\GitHubDesktop\*\*\*"; Note = "GitHub Desktop depth 3"},
             @{Path = "%APPDATA%\GitHub Desktop\*"; Note = "GitHub Desktop roaming"}
         )
         Notes = "Git client"
@@ -267,9 +267,9 @@ $AppPresets = @{
         Name = "Slack"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\slack\*"; Note = "Slack app"},
-            @{Path = "%LOCALAPPDATA%\slack\*\*"; Note = "Slack depth 2"},
-            @{Path = "%LOCALAPPDATA%\slack\*\*\*"; Note = "Slack depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\slack\*"; Note = "Slack app"},
+            @{Path = "%USERPROFILE%\AppData\Local\slack\*\*"; Note = "Slack depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\slack\*\*\*"; Note = "Slack depth 3"},
             @{Path = "%APPDATA%\Slack\*"; Note = "Slack roaming"}
         )
         Notes = "Team communication"
@@ -279,9 +279,9 @@ $AppPresets = @{
         Name = "Signal"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Programs\signal-desktop\*"; Note = "Signal app"},
-            @{Path = "%LOCALAPPDATA%\Programs\signal-desktop\*\*"; Note = "Signal depth 2"},
-            @{Path = "%LOCALAPPDATA%\Programs\signal-desktop\*\*\*"; Note = "Signal depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\signal-desktop\*"; Note = "Signal app"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\signal-desktop\*\*"; Note = "Signal depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\signal-desktop\*\*\*"; Note = "Signal depth 3"},
             @{Path = "%APPDATA%\Signal\*"; Note = "Signal data"}
         )
         Notes = "Secure messaging"
@@ -291,10 +291,10 @@ $AppPresets = @{
         Name = "OneDrive"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*"; Note = "OneDrive app"},
-            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*"; Note = "OneDrive depth 2"},
-            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*"; Note = "OneDrive depth 3"},
-            @{Path = "%LOCALAPPDATA%\Microsoft\OneDrive\*\*\*\*"; Note = "OneDrive depth 4"}
+            @{Path = "%USERPROFILE%\AppData\Local\Microsoft\OneDrive\*"; Note = "OneDrive app"},
+            @{Path = "%USERPROFILE%\AppData\Local\Microsoft\OneDrive\*\*"; Note = "OneDrive depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Microsoft\OneDrive\*\*\*"; Note = "OneDrive depth 3"},
+            @{Path = "%USERPROFILE%\AppData\Local\Microsoft\OneDrive\*\*\*\*"; Note = "OneDrive depth 4"}
         )
         Notes = "Cloud sync client"
     }
@@ -304,7 +304,7 @@ $AppPresets = @{
         Category = "System"
         Paths = @(
             @{Path = "%TEMP%\__PSScriptPolicyTest_*"; Note = "PowerShell policy test"},
-            @{Path = "%LOCALAPPDATA%\Temp\__PSScriptPolicyTest_*"; Note = "PowerShell policy test"}
+            @{Path = "%USERPROFILE%\AppData\Local\Temp\__PSScriptPolicyTest_*"; Note = "PowerShell policy test"}
         )
         Notes = "Required for PowerShell execution policy checks"
     }
