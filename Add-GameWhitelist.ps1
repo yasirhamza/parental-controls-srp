@@ -388,10 +388,14 @@ if ($Preset) {
 # Custom path
 if ($CustomPath) {
     Write-Host "`n[Custom Path]" -ForegroundColor Cyan
-    
+
+    # Strip trailing backslashes; otherwise "path\" + "\*" produces "path\\*",
+    # which SAFER stores literally and never matches anything.
+    $CustomPath = $CustomPath.TrimEnd('\')
+
     # Normalize path and add wildcards if needed
     $pathsToAdd = @()
-    
+
     if ($CustomPath -notmatch '\*$') {
         # Add with depth wildcards
         $pathsToAdd += "$CustomPath\*"
