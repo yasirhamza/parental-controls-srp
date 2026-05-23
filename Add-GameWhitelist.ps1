@@ -383,24 +383,34 @@ if ($Preset) {
 # Custom path
 if ($CustomPath) {
     Write-Host "`n[Custom Path]" -ForegroundColor Cyan
-    
-    # Normalize path and add wildcards if needed
+
+    # Decide how to expand the input:
+    #   - Exact executable (.exe/.dll/.ps1/.cmd/.bat/.msi): one rule, no wildcards
+    #   - Already contains a wildcard: trust user's pattern as-is
+    #   - Otherwise: treat as a directory and add depth wildcards (legacy behavior)
     $pathsToAdd = @()
-    
-    if ($CustomPath -notmatch '\*$') {
-        # Add with depth wildcards
+    $note       = "Custom path"
+
+    if ($CustomPath -match '\.(exe|dll|ps1|cmd|bat|msi)$') {
+        $pathsToAdd += $CustomPath
+        $note = "Custom exact executable"
+    }
+    elseif ($CustomPath -match '\*') {
+        $pathsToAdd += $CustomPath
+        $note = "Custom wildcard pattern"
+    }
+    else {
         $pathsToAdd += "$CustomPath\*"
         $pathsToAdd += "$CustomPath\*\*"
         $pathsToAdd += "$CustomPath\*\*\*"
-    } else {
-        $pathsToAdd += $CustomPath
+        $note = "Custom directory tree"
     }
-    
+
     foreach ($p in $pathsToAdd) {
         if ($Remove) {
             Remove-AllowRule -Path $p
         } else {
-            Add-AllowRule -Path $p -Note "Custom game path"
+            Add-AllowRule -Path $p -Note $note
         }
     }
 }
