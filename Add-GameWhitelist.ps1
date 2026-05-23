@@ -92,6 +92,13 @@ function Remove-AllowRule {
 # ═══════════════════════════════════════════════════════════════════
 # GAME PRESETS
 # ═══════════════════════════════════════════════════════════════════
+# SAFER tie-break: when an ALLOW and a BLOCK rule have equal specificity
+# (same number of literal chars before the wildcard), the BLOCK wins.
+# Enable-SRP-Complete.ps1 adds per-app BLOCK rules like
+# "%LOCALAPPDATA%\Discord\*", so ALLOW rules must push the wildcard
+# further right with a real subfolder name (Versions, app-*, etc.) to
+# out-specify the block. Don't reintroduce paths like
+# "%LOCALAPPDATA%\<app>\*" here — they tie and stay blocked.
 
 $GamePresets = @{
     Minecraft = @{
@@ -111,60 +118,58 @@ $GamePresets = @{
         Name = "Roblox"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Roblox\*"; Note = "Roblox Player"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*"; Note = "Roblox depth 2"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*\*"; Note = "Roblox depth 3"},
-            @{Path = "%LOCALAPPDATA%\Roblox\*\*\*\*"; Note = "Roblox depth 4"}
+            @{Path = "%LOCALAPPDATA%\Roblox\Versions\*"; Note = "Roblox versions root"},
+            @{Path = "%LOCALAPPDATA%\Roblox\Versions\*\*"; Note = "Roblox version files"},
+            @{Path = "%LOCALAPPDATA%\Roblox\Versions\*\*\*"; Note = "Roblox version subfolders"},
+            @{Path = "%LOCALAPPDATA%\Roblox\Downloads\*"; Note = "Roblox installer cache"}
         )
-        Notes = "Roblox Player and Studio"
+        Notes = "Roblox Player and Studio (Versions\\version-XXX\\RobloxPlayerBeta.exe)"
     }
 
     Steam = @{
         Name = "Steam"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Steam\*"; Note = "Steam local data"},
-            @{Path = "%LOCALAPPDATA%\Steam\*\*"; Note = "Steam depth 2"},
-            @{Path = "%LOCALAPPDATA%\Steam\*\*\*"; Note = "Steam depth 3"},
             @{Path = "%APPDATA%\Steam\*"; Note = "Steam roaming"},
             @{Path = "%USERPROFILE%\AppData\LocalLow\Steam\*"; Note = "Steam LocalLow"}
         )
-        Notes = "Steam client data (main install in Program Files)"
+        Notes = "Steam client (main install in Program Files; %LOCALAPPDATA%\\Steam is data only)"
     }
 
     Epic = @{
         Name = "Epic Games"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*"; Note = "Epic launcher"},
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*\*"; Note = "Epic depth 2"},
-            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\*\*\*"; Note = "Epic depth 3"},
+            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\Saved\*"; Note = "Epic Saved data"},
+            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\Saved\*\*"; Note = "Epic Saved depth 2"},
+            @{Path = "%LOCALAPPDATA%\EpicGamesLauncher\Saved\*\*\*"; Note = "Epic Saved depth 3"},
             @{Path = "%LOCALAPPDATA%\FortniteGame\*"; Note = "Fortnite data"},
             @{Path = "%LOCALAPPDATA%\UnrealEngine\*"; Note = "Unreal Engine"}
         )
-        Notes = "Epic launcher + Fortnite data"
+        Notes = "Epic launcher (main exe in Program Files; only Saved\\ may run helpers)"
     }
 
     Discord = @{
         Name = "Discord"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Discord\*"; Note = "Discord app"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*"; Note = "Discord depth 2"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*\*"; Note = "Discord depth 3"},
-            @{Path = "%LOCALAPPDATA%\Discord\*\*\*\*"; Note = "Discord depth 4"},
+            @{Path = "%LOCALAPPDATA%\Discord\Update.exe"; Note = "Discord Squirrel updater"},
+            @{Path = "%LOCALAPPDATA%\Discord\app-*\*"; Note = "Discord versioned app"},
+            @{Path = "%LOCALAPPDATA%\Discord\app-*\*\*"; Note = "Discord app depth 2"},
             @{Path = "%APPDATA%\discord\*"; Note = "Discord roaming"}
         )
-        Notes = "Voice/text chat for gaming"
+        Notes = "Voice/text chat (Squirrel installer: app-X.Y.Z\\Discord.exe + Update.exe)"
     }
 
     Overwolf = @{
         Name = "Overwolf"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\Overwolf\*"; Note = "Overwolf"},
-            @{Path = "%LOCALAPPDATA%\Overwolf\*\*"; Note = "Overwolf depth 2"},
-            @{Path = "%LOCALAPPDATA%\Overwolf\*\*\*"; Note = "Overwolf depth 3"}
+            @{Path = "%LOCALAPPDATA%\Overwolf\OverwolfLauncher.exe"; Note = "Overwolf launcher"},
+            @{Path = "%LOCALAPPDATA%\Overwolf\OverwolfPackages\*"; Note = "Overwolf packages"},
+            @{Path = "%LOCALAPPDATA%\Overwolf\OverwolfPackages\*\*"; Note = "Overwolf packages depth 2"},
+            @{Path = "%LOCALAPPDATA%\Overwolf\Extensions\*"; Note = "Overwolf extensions"},
+            @{Path = "%LOCALAPPDATA%\Overwolf\Extensions\*\*"; Note = "Overwolf extensions depth 2"}
         )
         Notes = "Gaming overlay and mods"
     }
@@ -173,9 +178,9 @@ $GamePresets = @{
         Name = "CurseForge"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\CurseForge\*"; Note = "CurseForge"},
-            @{Path = "%LOCALAPPDATA%\CurseForge\*\*"; Note = "CurseForge depth 2"},
-            @{Path = "%LOCALAPPDATA%\CurseForge\*\*\*"; Note = "CurseForge depth 3"},
+            @{Path = "%LOCALAPPDATA%\CurseForge\Bin\*"; Note = "CurseForge binaries"},
+            @{Path = "%LOCALAPPDATA%\CurseForge\Bin\*\*"; Note = "CurseForge bin depth 2"},
+            @{Path = "%LOCALAPPDATA%\CurseForge\Install\*"; Note = "CurseForge installer"},
             @{Path = "%USERPROFILE%\curseforge\*"; Note = "CurseForge games"},
             @{Path = "%USERPROFILE%\curseforge\*\*"; Note = "CurseForge depth 2"},
             @{Path = "%USERPROFILE%\curseforge\*\*\*"; Note = "CurseForge depth 3"}
@@ -196,10 +201,10 @@ $AppPresets = @{
             @{Path = "%APPDATA%\Spotify\*"; Note = "Spotify app"},
             @{Path = "%APPDATA%\Spotify\*\*"; Note = "Spotify depth 2"},
             @{Path = "%APPDATA%\Spotify\*\*\*"; Note = "Spotify depth 3"},
-            @{Path = "%LOCALAPPDATA%\Spotify\*"; Note = "Spotify local"},
-            @{Path = "%LOCALAPPDATA%\Spotify\*\*"; Note = "Spotify local depth 2"}
+            @{Path = "%LOCALAPPDATA%\Spotify\Update\*"; Note = "Spotify updater"},
+            @{Path = "%LOCALAPPDATA%\Spotify\Data\*"; Note = "Spotify cache"}
         )
-        Notes = "Music streaming"
+        Notes = "Music streaming (main exe in %APPDATA%\\Spotify)"
     }
 
     Zoom = @{
@@ -218,12 +223,12 @@ $AppPresets = @{
         Name = "WhatsApp"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*"; Note = "WhatsApp app"},
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*\*"; Note = "WhatsApp depth 2"},
-            @{Path = "%LOCALAPPDATA%\WhatsApp\*\*\*"; Note = "WhatsApp depth 3"},
+            @{Path = "%LOCALAPPDATA%\WhatsApp\Update.exe"; Note = "WhatsApp Squirrel updater"},
+            @{Path = "%LOCALAPPDATA%\WhatsApp\app-*\*"; Note = "WhatsApp versioned app"},
+            @{Path = "%LOCALAPPDATA%\WhatsApp\app-*\*\*"; Note = "WhatsApp app depth 2"},
             @{Path = "%APPDATA%\WhatsApp\*"; Note = "WhatsApp roaming"}
         )
-        Notes = "Messaging app"
+        Notes = "Messaging (Squirrel installer); UWP build runs from Packages and is unaffected"
     }
 
     Telegram = @{
@@ -254,24 +259,24 @@ $AppPresets = @{
         Name = "GitHub Desktop"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*"; Note = "GitHub Desktop"},
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*\*"; Note = "GitHub Desktop depth 2"},
-            @{Path = "%LOCALAPPDATA%\GitHubDesktop\*\*\*"; Note = "GitHub Desktop depth 3"},
+            @{Path = "%LOCALAPPDATA%\GitHubDesktop\Update.exe"; Note = "GitHub Desktop Squirrel updater"},
+            @{Path = "%LOCALAPPDATA%\GitHubDesktop\app-*\*"; Note = "GitHub Desktop versioned app"},
+            @{Path = "%LOCALAPPDATA%\GitHubDesktop\app-*\*\*"; Note = "GitHub Desktop app depth 2"},
             @{Path = "%APPDATA%\GitHub Desktop\*"; Note = "GitHub Desktop roaming"}
         )
-        Notes = "Git client"
+        Notes = "Git client (Squirrel installer: app-X.Y.Z\\GitHubDesktop.exe + Update.exe)"
     }
 
     Slack = @{
         Name = "Slack"
         Category = "App"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\slack\*"; Note = "Slack app"},
-            @{Path = "%LOCALAPPDATA%\slack\*\*"; Note = "Slack depth 2"},
-            @{Path = "%LOCALAPPDATA%\slack\*\*\*"; Note = "Slack depth 3"},
+            @{Path = "%LOCALAPPDATA%\slack\Update.exe"; Note = "Slack Squirrel updater"},
+            @{Path = "%LOCALAPPDATA%\slack\app-*\*"; Note = "Slack versioned app"},
+            @{Path = "%LOCALAPPDATA%\slack\app-*\*\*"; Note = "Slack app depth 2"},
             @{Path = "%APPDATA%\Slack\*"; Note = "Slack roaming"}
         )
-        Notes = "Team communication"
+        Notes = "Team communication (Squirrel installer: app-X.Y.Z\\slack.exe + Update.exe)"
     }
 
     Signal = @{
