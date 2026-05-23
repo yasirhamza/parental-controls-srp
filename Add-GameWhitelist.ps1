@@ -173,14 +173,15 @@ $GamePresets = @{
         Name = "CurseForge"
         Category = "Game"
         Paths = @(
-            @{Path = "%LOCALAPPDATA%\CurseForge\*"; Note = "CurseForge"},
-            @{Path = "%LOCALAPPDATA%\CurseForge\*\*"; Note = "CurseForge depth 2"},
-            @{Path = "%LOCALAPPDATA%\CurseForge\*\*\*"; Note = "CurseForge depth 3"},
-            @{Path = "%USERPROFILE%\curseforge\*"; Note = "CurseForge games"},
-            @{Path = "%USERPROFILE%\curseforge\*\*"; Note = "CurseForge depth 2"},
-            @{Path = "%USERPROFILE%\curseforge\*\*\*"; Note = "CurseForge depth 3"}
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\CurseForge\*";     Note = "CurseForge app"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\CurseForge\*\*";   Note = "CurseForge depth 2"},
+            @{Path = "%USERPROFILE%\AppData\Local\Programs\CurseForge\*\*\*"; Note = "CurseForge depth 3"},
+            @{Path = "%USERPROFILE%\Downloads\CurseForge*.exe";               Note = "CurseForge installer"},
+            @{Path = "%USERPROFILE%\curseforge\*";                            Note = "CurseForge games root"},
+            @{Path = "%USERPROFILE%\curseforge\*\*";                          Note = "CurseForge games depth 2"},
+            @{Path = "%USERPROFILE%\curseforge\*\*\*";                        Note = "CurseForge games depth 3"}
         )
-        Notes = "Mod manager (Minecraft, WoW)"
+        Notes = "Mod manager (Minecraft, WoW) - app + installer"
     }
 }
 
