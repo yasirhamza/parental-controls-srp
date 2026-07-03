@@ -6,7 +6,7 @@
     Run this AFTER Enable-SRP-Complete.ps1 to allow specific games and apps
     that install to user-writable locations (AppData, etc.)
 .PARAMETER Preset
-    Use a preset - Games: Minecraft, Roblox, Steam, Epic, Discord, Overwolf, CurseForge
+    Use a preset - Games: Minecraft, Roblox, Steam, Epic, Discord, Overwolf, CurseForge, Modrinth
                    Apps: Spotify, Zoom, WhatsApp, Telegram, VSCode, GitHubDesktop, Slack, Signal
                    Special: AllGames, AllApps, All
 .PARAMETER CustomPath
@@ -26,7 +26,7 @@
 param(
     [ValidateSet(
         # Games
-        "Minecraft", "Roblox", "Steam", "Epic", "Discord", "Overwolf", "CurseForge",
+        "Minecraft", "Roblox", "Steam", "Epic", "Discord", "Overwolf", "CurseForge", "Modrinth",
         # Apps
         "Spotify", "Zoom", "WhatsApp", "Telegram", "VSCode", "GitHubDesktop", "Slack", "Signal", "OneDrive", "PowerShell",
         # Batch options
@@ -179,9 +179,29 @@ $GamePresets = @{
             @{Path = "%USERPROFILE%\Downloads\CurseForge*.exe";               Note = "CurseForge installer"},
             @{Path = "%USERPROFILE%\curseforge\*";                            Note = "CurseForge games root"},
             @{Path = "%USERPROFILE%\curseforge\*\*";                          Note = "CurseForge games depth 2"},
-            @{Path = "%USERPROFILE%\curseforge\*\*\*";                        Note = "CurseForge games depth 3"}
+            @{Path = "%USERPROFILE%\curseforge\*\*\*";                        Note = "CurseForge games depth 3"},
+            @{Path = "%USERPROFILE%\curseforge\*\*\*\*";                      Note = "CurseForge games depth 4"},
+            @{Path = "%USERPROFILE%\curseforge\*\*\*\*\*";                    Note = "CurseForge games depth 5"},
+            @{Path = "%USERPROFILE%\curseforge\*\*\*\*\*\*";                  Note = "CurseForge games depth 6"},
+            @{Path = "%USERPROFILE%\curseforge\*\*\*\*\*\*\*";                Note = "CurseForge depth 7 (bundled Java runtime)"}
         )
         Notes = "Mod manager (Minecraft, WoW) - app + installer"
+    }
+
+    Modrinth = @{
+        Name = "Modrinth"
+        Category = "Game"
+        Paths = @(
+            @{Path = "%APPDATA%\ModrinthApp\*";                               Note = "Modrinth App data"},
+            @{Path = "%APPDATA%\ModrinthApp\*\*";                             Note = "Modrinth depth 2"},
+            @{Path = "%APPDATA%\ModrinthApp\*\*\*";                           Note = "Modrinth depth 3"},
+            @{Path = "%APPDATA%\ModrinthApp\*\*\*\*";                         Note = "Modrinth depth 4"},
+            @{Path = "%APPDATA%\ModrinthApp\*\*\*\*\*";                       Note = "Modrinth depth 5 (bundled JRE javaw)"},
+            @{Path = "%APPDATA%\ModrinthApp\*\*\*\*\*\*";                     Note = "Modrinth depth 6 (profile files)"},
+            @{Path = "%USERPROFILE%\AppData\Local\Modrinth App\*";            Note = "Modrinth launcher (per-user install)"},
+            @{Path = "%USERPROFILE%\AppData\Local\Modrinth App\*\*";          Note = "Modrinth launcher depth 2"}
+        )
+        Notes = "Minecraft mod launcher"
     }
 }
 

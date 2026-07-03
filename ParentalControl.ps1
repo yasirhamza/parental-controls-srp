@@ -24,19 +24,20 @@ $script:GamePresets = [ordered]@{
     "5" = @{ Name = "Discord"; Desc = "Voice/text chat" }
     "6" = @{ Name = "Overwolf"; Desc = "Gaming overlay" }
     "7" = @{ Name = "CurseForge"; Desc = "Mod manager" }
+    "8" = @{ Name = "Modrinth"; Desc = "Minecraft mod launcher" }
 }
 
 $script:AppPresets = [ordered]@{
-    "8"  = @{ Name = "Spotify"; Desc = "Music streaming" }
-    "9"  = @{ Name = "Zoom"; Desc = "Video calls" }
-    "10" = @{ Name = "WhatsApp"; Desc = "Messaging" }
-    "11" = @{ Name = "Telegram"; Desc = "Messaging" }
-    "12" = @{ Name = "VSCode"; Desc = "Code editor" }
-    "13" = @{ Name = "GitHubDesktop"; Desc = "Git client" }
-    "14" = @{ Name = "Slack"; Desc = "Team chat" }
-    "15" = @{ Name = "Signal"; Desc = "Secure messaging" }
-    "16" = @{ Name = "OneDrive"; Desc = "Cloud sync" }
-    "17" = @{ Name = "PowerShell"; Desc = "PS policy test scripts" }
+    "9"  = @{ Name = "Spotify"; Desc = "Music streaming" }
+    "10" = @{ Name = "Zoom"; Desc = "Video calls" }
+    "11" = @{ Name = "WhatsApp"; Desc = "Messaging" }
+    "12" = @{ Name = "Telegram"; Desc = "Messaging" }
+    "13" = @{ Name = "VSCode"; Desc = "Code editor" }
+    "14" = @{ Name = "GitHubDesktop"; Desc = "Git client" }
+    "15" = @{ Name = "Slack"; Desc = "Team chat" }
+    "16" = @{ Name = "Signal"; Desc = "Secure messaging" }
+    "17" = @{ Name = "OneDrive"; Desc = "Cloud sync" }
+    "18" = @{ Name = "PowerShell"; Desc = "PS policy test scripts" }
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -146,6 +147,7 @@ function Get-WhitelistedGames {
             "Discord" = "Discord"
             "Overwolf" = "Overwolf"
             "CurseForge" = "CurseForge|curseforge"
+            "Modrinth" = "ModrinthApp|Modrinth"
         }
 
         foreach ($game in $gamePatterns.Keys) {
